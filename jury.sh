@@ -14,17 +14,18 @@
 #
 # Env:
 #   OPENROUTER_API_KEY   required
-#   MODELS               comma-separated OpenRouter slugs. Default is tuned for running
-#                        this INSIDE Claude Code (as the /jury skill): your session is
-#                        already a Claude reviewer, so the panel adds three NON-Claude
-#                        lineages — Zhipu (GLM), MiniMax, DeepSeek — for maximum
-#                        non-overlapping blind spots. deepseek-v4-pro is a strong
-#                        *reasoning* model: better depth, but slow (can take minutes on
-#                        a big diff) — swap it for a faster pick if you don't run in Claude.
-#                        Distinct LINEAGES matter more than count; benchmark with ./bench.
+#   MODELS               comma-separated OpenRouter slugs. Default = the two models that
+#                        actually EARNED their seat in a 10-diff benchmark (see ./bench and
+#                        the RESULTS): glm-5.2 (6/7 real bugs) + minimax-m3 (3/7, and it
+#                        caught the one GLM missed) — together 7/7, fast, complementary.
+#                        We tested deepseek-v4-pro (3/7 but slow+flaky, 0 unique) and
+#                        claude-sonnet-4.5 (1/7, 19 false positives) as a 3rd seat: neither
+#                        added signal, both added noise, so the panel stays at two. Running
+#                        inside Claude Code, your own session is the effective 3rd reviewer.
+#                        Re-benchmark when new models drop; distinct LINEAGES > count.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
-MODELS="${MODELS:-z-ai/glm-5.2,minimax/minimax-m3,deepseek/deepseek-v4-pro}"
+MODELS="${MODELS:-z-ai/glm-5.2,minimax/minimax-m3}"
 [ -n "${OPENROUTER_API_KEY:-}" ] || { echo "✗ OPENROUTER_API_KEY not set" >&2; exit 1; }
 
 IFS=',' read -ra LIST <<< "$MODELS"
