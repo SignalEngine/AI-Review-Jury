@@ -84,6 +84,13 @@ Either way: in any repo, run it on your changes (`/jury`, `/jury --commit HEAD`,
 [`skills/ai-review-jury/SKILL.md`](skills/ai-review-jury/SKILL.md) ·
 [`commands/jury.md`](commands/jury.md).
 
+Confirm the install is wired, current, and live anytime (e.g. at session start):
+
+```bash
+bash /path/to/AI-Review-Jury/jury-check.sh
+# ✓ panel · ✓ key · ✓ /jury installed · ✓ repo live + in sync · ✓ freshness
+```
+
 ## Benchmark: which models earn a seat?
 
 Don't take my table's word for it — your codebase is different. Run it on your own history:
