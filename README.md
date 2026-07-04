@@ -1,4 +1,4 @@
-# diff-jury
+# AI Review Jury
 
 **A jury of diverse AI models reviews your git diff — and a harness to prove which models actually catch bugs in _your_ codebase.**
 
