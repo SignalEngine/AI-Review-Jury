@@ -58,6 +58,22 @@ Pick your own panel — distinct **lineages** matter more than count (Anthropic 
 MODELS="anthropic/claude-sonnet-4.5,openai/gpt-5.1,z-ai/glm-5.2" jury.sh --commit HEAD
 ```
 
+## Use it as a Claude Code slash command
+
+Turn the jury into a `/jury` command you invoke like any other review. Copy the ready-made
+command into your Claude Code commands dir and point it at your clone:
+
+```bash
+mkdir -p ~/.claude/commands
+cp commands/jury.md ~/.claude/commands/jury.md
+# then: edit the jury.sh path inside it, and set OPENROUTER_API_KEY in your env
+```
+
+Then in any repo: `/jury`, `/jury --commit HEAD`, or `/jury focus on the auth changes`. Claude
+runs the panel and **triages** each finding — confirm or refute it against the actual code —
+instead of dumping raw model output. A claim is a lead, not a verdict. The command file:
+[`commands/jury.md`](commands/jury.md).
+
 ## Benchmark: which models earn a seat?
 
 Don't take my table's word for it — your codebase is different. Run it on your own history:
