@@ -42,7 +42,7 @@ echo "◆ benchmarking ${#MLIST[@]} models × ${#COMMITS[@]} commits = $(( ${#ML
 run_one() {
   local sha="$1" model="$2" out="$3"
   local safe="${model//\//_}"
-  timeout 200 env MODEL="$model" bash "$HERE/../review.sh" --commit "$sha" > "$out/reviews/${sha}__${safe}.txt" 2>&1 \
+  timeout 200 env MODEL="$model" bash "$HERE/../juror.sh" --commit "$sha" > "$out/reviews/${sha}__${safe}.txt" 2>&1 \
     || echo "(timeout/error)" >> "$out/reviews/${sha}__${safe}.txt"
   echo "  ✓ $sha $model"
 }

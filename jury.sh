@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# panel.sh — a JURY of diverse-lineage models reviews the same diff, in parallel.
+# jury.sh — a JURY of diverse-lineage models reviews the same diff, in parallel.
 #
 # One model's blind spots are systematic — a different training lineage has
 # *different* blind spots, so a panel of diverse models catches bugs any single
@@ -7,10 +7,10 @@
 # a model only helps if it's actually strong on YOUR code — a leaderboard rank
 # doesn't transfer. Use ./bench to find out which models earn a seat.
 #
-# Usage (from inside a git repo): same args as review.sh, forwarded verbatim.
-#   panel.sh                      # branch vs origin/main
-#   panel.sh --commit <sha>
-#   panel.sh --uncommitted "focus on the auth changes"
+# Usage (from inside a git repo): same args as juror.sh, forwarded verbatim.
+#   jury.sh                      # branch vs origin/main
+#   jury.sh --commit <sha>
+#   jury.sh --uncommitted "focus on the auth changes"
 #
 # Env:
 #   OPENROUTER_API_KEY   required
@@ -29,7 +29,7 @@ TMP=$(mktemp -d)
 pids=()
 for m in "${LIST[@]}"; do
   safe="${m//\//_}"
-  ( MODEL="$m" bash "$HERE/review.sh" "$@" > "$TMP/$safe.txt" 2>"$TMP/$safe.err" || true ) &
+  ( MODEL="$m" bash "$HERE/juror.sh" "$@" > "$TMP/$safe.txt" 2>"$TMP/$safe.err" || true ) &
   pids+=($!)
 done
 for p in "${pids[@]}"; do wait "$p"; done
