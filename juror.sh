@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# review.sh — one AI model reviews a git diff for correctness/security bugs.
+# juror.sh — one AI model reviews a git diff for correctness/security bugs.
 #
 # Reads OPENROUTER_API_KEY from the env and sends the diff to one model via
 # OpenRouter (any model, one API). Read-only: it prints findings, it never edits
 # your code. Triage the findings yourself — treat them as leads, not verdicts.
 #
 # Usage (run from inside a git repo):
-#   review.sh                     # branch diff vs origin/main (or origin/master)
-#   review.sh --base <ref>        # diff vs an arbitrary base ref
-#   review.sh --commit <sha>      # a single commit
-#   review.sh --uncommitted       # your current uncommitted (tracked) changes
-#   review.sh "<focus note>"      # append a focus instruction to the prompt
+#   juror.sh                     # branch diff vs origin/main (or origin/master)
+#   juror.sh --base <ref>        # diff vs an arbitrary base ref
+#   juror.sh --commit <sha>      # a single commit
+#   juror.sh --uncommitted       # your current uncommitted (tracked) changes
+#   juror.sh "<focus note>"      # append a focus instruction to the prompt
 #
 # Env:
 #   OPENROUTER_API_KEY   required

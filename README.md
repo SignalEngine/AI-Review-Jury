@@ -4,8 +4,8 @@
 
 One reviewer, human or model, has systematic blind spots. A reviewer from a *different* lineage has *different* blind spots, so a small panel catches bugs any single one misses — the same reason two human reviewers beat one. The catch nobody tells you: **a public leaderboard rank does not transfer to your code.** The only way to know which models earn a seat on your panel is to run them on your own diffs and check the findings. This repo does both.
 
-- **`review.sh`** — one model reviews a diff (any model, via [OpenRouter](https://openrouter.ai)).
-- **`panel.sh`** — a diverse panel reviews the same diff in parallel.
+- **`juror.sh`** — one model reviews a diff (any model, via [OpenRouter](https://openrouter.ai)).
+- **`jury.sh`** — a diverse panel reviews the same diff in parallel.
 - **`bench/`** — run N models over your recent commits, triage the findings against the real code, and get a per-model **precision / recall / unique-bugs** scorecard.
 
 It's ~200 lines of bash + python. No service, no daemon, no lock-in. It prints findings; **you** triage them — a claim is a lead, not a verdict.
@@ -31,7 +31,7 @@ Two things that a leaderboard would never have told me:
 
 ```bash
 git clone <this-repo> && cd AI-Review-Jury
-chmod +x review.sh panel.sh bench/collect.sh
+chmod +x juror.sh jury.sh bench/collect.sh
 export OPENROUTER_API_KEY=sk-or-...        # from openrouter.ai/keys
 ```
 
@@ -43,19 +43,19 @@ Run from inside the repo you're reviewing:
 
 ```bash
 # one model on your branch's diff vs origin/main
-/path/to/AI-Review-Jury/review.sh
+/path/to/AI-Review-Jury/juror.sh
 
 # the full panel on a specific commit
-/path/to/AI-Review-Jury/panel.sh --commit 1a2b3c4
+/path/to/AI-Review-Jury/jury.sh --commit 1a2b3c4
 
 # panel on uncommitted work, with a focus note
-/path/to/AI-Review-Jury/panel.sh --uncommitted "focus on the auth and payment changes"
+/path/to/AI-Review-Jury/jury.sh --uncommitted "focus on the auth and payment changes"
 ```
 
 Pick your own panel — distinct **lineages** matter more than count (Anthropic + OpenAI + Zhipu + MiniMax beats four models from one lab):
 
 ```bash
-MODELS="anthropic/claude-sonnet-4.5,openai/gpt-5.1,z-ai/glm-5.2" panel.sh --commit HEAD
+MODELS="anthropic/claude-sonnet-4.5,openai/gpt-5.1,z-ai/glm-5.2" jury.sh --commit HEAD
 ```
 
 ## Benchmark: which models earn a seat?
