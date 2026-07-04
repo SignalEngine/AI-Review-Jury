@@ -25,8 +25,21 @@
 #                        Re-benchmark when new models drop; distinct LINEAGES > count.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
-MODELS="${MODELS:-z-ai/glm-5.2,minimax/minimax-m3}"
+# Self-updating panel: `jury-tune` benchmarks new OpenRouter models and writes the
+# winners to panel.conf (one line of comma-separated slugs). Falls back to the
+# benchmarked default. Env MODELS overrides everything.
+PANEL_DEFAULT="z-ai/glm-5.2,minimax/minimax-m3"
+PANEL_FILE=""
+[ -f "$HERE/panel.conf" ] && PANEL_FILE="$(grep -vE '^[[:space:]]*(#|$)' "$HERE/panel.conf" | head -1 | tr -d '[:space:]')"
+MODELS="${MODELS:-${PANEL_FILE:-$PANEL_DEFAULT}}"
 [ -n "${OPENROUTER_API_KEY:-}" ] || { echo "✗ OPENROUTER_API_KEY not set" >&2; exit 1; }
+
+# Staleness nudge: new models ship constantly and a leaderboard rank doesn't transfer,
+# so prompt a re-benchmark after a week of use. jury-tune stamps .jury-last-tuned.
+if [ -f "$HERE/.jury-last-tuned" ]; then
+  _age=$(( ( $(date +%s) - $(cat "$HERE/.jury-last-tuned" 2>/dev/null || echo 0) ) / 86400 ))
+  [ "$_age" -ge 7 ] && echo "◆ ⚠ Panel is ${_age}d old — new models may have shipped. Re-benchmark + self-update: run jury-tune (or /jury-tune)." >&2
+fi
 
 IFS=',' read -ra LIST <<< "$MODELS"
 echo "◆ AI Review Jury: ${#LIST[@]} models reviewing in parallel — ${MODELS}" >&2

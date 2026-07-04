@@ -102,6 +102,22 @@ python3 /path/to/AI-Review-Jury/bench/aggregate.py ./ai-review-jury-bench/verdic
 
 → the precision/recall/unique-REAL scorecard above, for **your** code. Keep the models that pull their weight; drop the ones that just fill your inbox.
 
+## Self-updating (the panel tunes itself)
+
+A frozen panel rots — new models ship weekly. So after a week, `jury.sh` nudges you:
+
+```
+◆ ⚠ Panel is 8d old — new models may have shipped. Re-benchmark + self-update: run jury-tune (or /jury-tune)
+```
+
+Running **`jury-tune`** (or the `/jury-tune` skill in Claude Code) then does, automatically, what you'd do by hand:
+
+1. `tune-collect.sh` fetches the live OpenRouter model list, picks the current panel + the newest plausible-reviewer model **per lineage since your last tune**, and benchmarks them all over your recent diffs.
+2. The skill **verifies every finding against your actual code** (real vs false positive — establishing ground truth on the fly, since recent diffs aren't pre-labelled), scoring each candidate on **unique verified-real bugs** vs **false positives**.
+3. It rewrites `panel.conf` **only if a challenger genuinely earns a seat** — caught a real bug the incumbents missed, at no worse a false-positive rate. A model that fired confident false alarms, came back empty, or timed out is never seated, no matter its raw catch count. Then it stamps `.jury-last-tuned`.
+
+**"No change" is the common, correct outcome** — the bar to swap the models reviewing your code is deliberately high. `panel.conf` and `.jury-last-tuned` are per-user (gitignored); the shipped default (`glm-5.2 + minimax-m3`) is the fallback.
+
 ## What this is not
 
 - **Not an auto-fixer.** It never touches your code. Findings are leads to verify.
