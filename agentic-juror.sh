@@ -3,8 +3,10 @@
 # commit AGENTICALLY (reads callers/config beyond the diff), Codex-style.
 # Harness: headless Claude Code pointed at OpenRouter's Anthropic-compatible endpoint
 # (/api/v1/messages passes tool_use through — probed 2026-07-05). Model: GLM-5.2.
-# Read-only: only Read/Grep/Glob + git-read Bash allowed; writes auto-denied headless;
-# verify with the writes_check line in the .meta output.
+# Read-only: enforced with --disallowedTools (deny beats allow). NOTE (10-commit bench
+# lesson): --allowedTools alone does NOT restrict — the worktree inherits the repo's
+# .claude/settings.json allow rules, so the model also ran grep/npx/curl. Zero writes
+# occurred in 10/10 runs, but always verify the writes_check line in the .meta output.
 # Proven in the 2026-07-05 smoke test (2 commits, 25 tool calls, 0 format failures,
 # 0 writes, ~$0.21-0.41/review): caught the reduced-motion diffBaseline bug diff-only
 # GLM missed, plus a new real argv bug. Known wart: `claude -p` result field comes back
@@ -33,6 +35,7 @@ cd "$WT" && ANTHROPIC_BASE_URL="https://openrouter.ai/api" \
   timeout 900 claude -p "$PROMPT" \
     --model "z-ai/glm-5.2" \
     --allowedTools "Read,Grep,Glob,Bash(git show:*),Bash(git log:*),Bash(git diff:*),Bash(cat:*),Bash(ls:*)" \
+    --disallowedTools "Edit,Write,NotebookEdit,Task,Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(rm:*),Bash(mv:*),Bash(npm install:*),Bash(npx convex:*)" \
     --max-turns 40 \
     --output-format json > "$OUT.json" 2> "$OUT.err"
 RC=$?
