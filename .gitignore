@@ -4,6 +4,7 @@ jury-tune-run/
 # per-user self-update state (jury-tune writes these)
 panel.conf
 .jury-last-tuned
+.panel-last-tuned
 *.tmp
 .DS_Store
 panel-bench/out/

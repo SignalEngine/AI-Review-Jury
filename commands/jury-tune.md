@@ -43,3 +43,15 @@ the panel only when the evidence is real. Set `OPENROUTER_API_KEY` in your env f
 
 ## Notes
 - Override challengers: `CHALLENGERS="x-ai/grok-5,qwen/qwen4-max"`. First arg = diffs to benchmark over (default 8).
+
+## Tuning the /panel preset seats (panels.conf) — one hard rule
+
+The non-code panel (`panel.sh` idea/plan/copy/design seats) is tuned separately — code
+seats do NOT transfer across domains. When `panel.sh` nudges staleness or new lineages ship:
+**write FRESH planted-flaw fixtures — never reuse the repo's published ones** (they may be
+in newer models' training data; reusing them inflates challenger scores). Follow the
+pattern in `panel-bench/ANSWER_KEY.md` (4 objectively-verifiable flaws per fixture + 1
+clean restraint control per preset), collect with `panel-bench/collect.sh`, judge per
+`panel-bench/judge-brief.md` (validate the judge with a pre-derived probe), apply the same
+seat rules (unique-real + restraint + reliability + price), update `panels.conf`, stamp
+`.panel-last-tuned`.

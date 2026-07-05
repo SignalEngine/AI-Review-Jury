@@ -43,6 +43,15 @@ case "$PRESET" in
 esac
 PROMPT="$ROLE $TAIL${FOCUS:+ Focus: $FOCUS}"
 
+# Staleness nudge (mirrors jury.sh): preset seats are empirical and models ship weekly.
+# IMPORTANT for re-tunes: the published panel-bench fixtures may be in newer models'
+# training data — always write FRESH planted-flaw fixtures (see panel-bench/ANSWER_KEY.md
+# for the pattern); reusing published ones inflates challenger scores.
+if [ -f "$HERE/.panel-last-tuned" ]; then
+  _age=$(( ( $(date +%s) - $(cat "$HERE/.panel-last-tuned" 2>/dev/null || echo 0) ) / 86400 ))
+  [ "$_age" -ge 30 ] && echo "◆ ⚠ Panel seats are ${_age}d old — re-benchmark with FRESH fixtures (panel-bench/, then update panels.conf + stamp .panel-last-tuned)." >&2
+fi
+
 # Panel selection: MODELS env > panels.conf per-preset line > code-review default.
 PANEL_DEFAULT="z-ai/glm-5.2,minimax/minimax-m3"
 CONF=""
