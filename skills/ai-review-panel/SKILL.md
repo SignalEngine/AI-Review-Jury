@@ -12,7 +12,7 @@ can't sycophantically agree with the user. Critics, never executors.
 
 ## Setup (once)
 - `OPENROUTER_API_KEY` in the environment (https://openrouter.ai/keys).
-- Clone https://github.com/Powleads/AI-Review-Jury and note the path to `panel.sh`.
+- Clone https://github.com/SignalEngine/AI-Review-Jury and note the path to `panel.sh`.
 
 ## Run it
 ```bash

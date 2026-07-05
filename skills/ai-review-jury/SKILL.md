@@ -13,7 +13,7 @@ code: findings are leads, not verdicts.
 ## Setup (once)
 - Set `OPENROUTER_API_KEY` in the environment (from https://openrouter.ai/keys) — one key covers
   every model lineage (Claude, GPT, GLM, MiniMax, DeepSeek); no separate accounts.
-- Clone https://github.com/Powleads/AI-Review-Jury and note the path to `jury.sh` (or put it on PATH).
+- Clone https://github.com/SignalEngine/AI-Review-Jury and note the path to `jury.sh` (or put it on PATH).
 
 ## Run it
 From inside the repo you're reviewing (read-only):
