@@ -16,8 +16,8 @@
 # only after a 10-commit bench like the diff-only one.
 set -uo pipefail
 WT="$1"; SHA="$2"; OUT="$3"
-KEY="$(ssh -o StrictHostKeyChecking=no root@REDACTED-HOST 'docker exec REDACTED-CONTAINER printenv OPENROUTER_API_KEY' 2>/dev/null)"
-[ -n "$KEY" ] || { echo "no key"; exit 1; }
+KEY="${OPENROUTER_API_KEY:-}"
+[ -n "$KEY" ] || { echo "✗ OPENROUTER_API_KEY not set" >&2; exit 1; }
 
 credits() { curl -s https://openrouter.ai/api/v1/credits -H "Authorization: Bearer $KEY" | python3 -c 'import json,sys;d=json.load(sys.stdin)["data"];print(d["total_credits"]-d["total_usage"])'; }
 

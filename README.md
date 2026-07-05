@@ -6,7 +6,9 @@ One reviewer, human or model, has systematic blind spots. A reviewer from a *dif
 
 - **`juror.sh`** — one model reviews a diff (any model, via [OpenRouter](https://openrouter.ai)).
 - **`jury.sh`** — a diverse panel reviews the same diff in parallel.
-- **`bench/`** — run N models over your recent commits, triage the findings against the real code, and get a per-model **precision / recall / unique-bugs** scorecard.
+- **`panel.sh`** — the same idea generalized past code: a panel critiques an **idea, plan, marketing copy, or UI spec** (per-preset prompts + per-preset benchmarked seats).
+- **`agentic-juror.sh`** — one foreign-lineage model reviews a commit **agentically** (Codex-style: reads callers, runs tests, traces beyond the diff) using Claude Code as the harness via OpenRouter's Anthropic-compatible endpoint.
+- **`bench/`** — run N models over your recent commits, triage the findings against the real code, and get a per-model **precision / recall / unique-bugs** scorecard. **`panel-bench/`** — the same for non-code presets, with planted-flaw fixtures (ground truth by construction).
 
 It's ~200 lines of bash + python. No service, no daemon, no lock-in. It prints findings; **you** triage them — a claim is a lead, not a verdict.
 
@@ -27,7 +29,7 @@ Two things that a leaderboard would never have told me:
 
 `unique-REAL` is the number that matters: real bugs **only** that model caught. That's what a model actually adds to a panel you already have. `false positives` is what it charges you in triage time. Add a model when the first column beats the second.
 
-> **Default panel.** `jury.sh` defaults to `glm-5.2 + minimax-m3 + deepseek-v4-pro` — tuned for running *inside* Claude Code: your session is already a Claude reviewer, so the panel spends its slots on non-Claude lineages (Zhipu, MiniMax, DeepSeek) for maximum non-overlapping coverage. Note that's deepseek-v4-**pro** (the strong *reasoning* variant), **not** the `deepseek-v4-flash` that flunked the table above — a different model. Pro trades speed for depth (minutes on a big diff); `MODELS=` swaps it for a faster pick if you're not running in Claude.
+> **Default panel.** `jury.sh` defaults to `glm-5.2 + minimax-m3` — the two seats that earned their place in the 10-diff benchmark (86% + 43% recall, 7/7 combined; a deepseek-pro and a sonnet third seat were both auditioned and added noise, not signal). Tuned for running *inside* Claude Code: your session is already a Claude reviewer, so the panel spends its slots on non-Claude lineages. Self-updating: `jury-tune` re-benchmarks challengers and writes winners to `panel.conf`; `MODELS=` overrides everything.
 
 ## Setup
 
@@ -84,12 +86,60 @@ Either way: in any repo, run it on your changes (`/jury`, `/jury --commit HEAD`,
 [`skills/ai-review-jury/SKILL.md`](skills/ai-review-jury/SKILL.md) ·
 [`commands/jury.md`](commands/jury.md).
 
+The non-code panel installs the same way: [`commands/panel.md`](commands/panel.md) →
+`~/.claude/commands/` for a `/panel` slash command, or
+[`skills/ai-review-panel/SKILL.md`](skills/ai-review-panel/SKILL.md) → `~/.claude/skills/`
+so the model reaches for it whenever an idea/plan/copy/spec critique fits.
+
 Confirm the install is wired, current, and live anytime (e.g. at session start):
 
 ```bash
 bash /path/to/AI-Review-Jury/jury-check.sh
 # ✓ panel · ✓ key · ✓ /jury installed · ✓ repo live + in sync · ✓ freshness
 ```
+
+## Beyond code: `panel.sh` — jury an idea, a plan, copy, or a UI spec
+
+The blind-spot thesis isn't code-specific. `panel.sh` runs the same diverse-lineage fan-out
+over **any text**, with a tuned critique prompt per preset and per-preset benchmarked seats
+read from `panels.conf`:
+
+```bash
+panel.sh --preset idea  pitch.md                 # unit economics, contradictions, regulatory, market math
+panel.sh --preset plan  rollout-plan.md "focus on rollback"   # ordering, races, missing rollback
+panel.sh --preset copy  landing-copy.md          # contradictory claims, legal risk, CTA mismatch
+panel.sh --preset design spec.md                 # a11y, overload, color-only state (TEXT specs, not screenshots)
+cat idea.md | panel.sh --preset idea -           # stdin
+```
+
+Seats are empirical here too — and they **don't transfer from the code benchmark**. In a
+48-planted-flaw benchmark across 10 models (fixtures with known arithmetic errors,
+contradictions, ordering bugs + clean controls to measure restraint): GLM-5.2 swept 48/48
+with zero false positives; the code panel's #2 (MiniMax) was mid-pack on prose; one large
+well-known model fabricated citations. Re-run it on your own fixtures: `panel-bench/collect.sh`
+→ judge with `panel-bench/judge-brief.md` → `panel-bench/aggregate.py` → edit `panels.conf`.
+Same contract as the jury: critics, never executors — findings are leads you triage.
+
+## Agentic mode: `agentic-juror.sh` — Codex-style review from a non-OpenAI lineage
+
+A diff-only jury can't read the caller in another file. `agentic-juror.sh` gives a foreign
+lineage the same repo-awareness OpenAI's Codex has, with zero extra accounts: it runs
+**headless Claude Code as the harness**, pointed at OpenRouter's Anthropic-compatible
+endpoint (`/api/v1/messages` passes `tool_use` through), driving `z-ai/glm-5.2` read-only
+in your repo:
+
+```bash
+OPENROUTER_API_KEY=... agentic-juror.sh <worktree-or-repo-path> <sha> /tmp/out
+# → /tmp/out.json (claude -p output) + /tmp/out.meta (cost, wall-clock, writes-check)
+```
+
+Measured on a 10-commit production bench (known ground truth): 10/10 loops completed,
+0 writes, ~150 well-formed tool calls, ~$0.46/review avg. It caught 3 real bugs the
+diff-only jury never produced (including one only found by tracing a *caller outside the
+diff*, and one by running the repo's own test suite) — and missed 2 the diff-only jury
+caught. **Same model, different mode = different blind spots: run it as a complement on
+high-stakes diffs, not a replacement.** Requires the `claude` CLI. Read-only is enforced
+via `--disallowedTools` deny rules; still verify the `writes_check` line in the meta output.
 
 ## Benchmark: which models earn a seat?
 
