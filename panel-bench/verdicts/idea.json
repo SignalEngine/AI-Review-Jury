@@ -1,0 +1,135 @@
+{
+  "preset": "idea",
+  "models": {
+    "deepseek/deepseek-v4-pro": {
+      "caught": ["I1.1", "I1.2", "I1.3", "I1.4", "I2.1", "I2.2", "I2.3", "I2.4", "I3.1", "I3.2", "I3.3", "I3.4"],
+      "missed": [],
+      "fp": 0,
+      "fp_examples": [],
+      "bonus": [
+        "£150k ask underfunds two integration hires + runway (idea-1)",
+        "'zero marginal cost' for cooks is false — extra portions cost real ingredients (idea-2)",
+        "tap-to-unblock is also one tap away, defeating the ritual premise (idea-3)"
+      ],
+      "clean_verdict": "SOUND",
+      "errors": []
+    },
+    "google/gemini-3.1-pro-preview": {
+      "caught": ["I1.1", "I1.2", "I1.3", "I1.4", "I2.1", "I2.2", "I2.4", "I3.1", "I3.2", "I3.3", "I3.4"],
+      "missed": ["I2.3"],
+      "fp": 0,
+      "fp_examples": [],
+      "bonus": [
+        "photo/rating trust model can't catch invisible allergens, delisting is after-the-fact (idea-2)",
+        "D2C £17.40 price leaves only £1.90 to cover any CAC (idea-3)",
+        "£1,200 consultant replacement just shifts DIY labor onto practice manager (idea-0 note)"
+      ],
+      "clean_verdict": "NOISY",
+      "errors": []
+    },
+    "minimax/minimax-m3": {
+      "caught": ["I1.1", "I1.2", "I1.3", "I1.4", "I2.1", "I2.2", "I2.3", "I2.4", "I3.1", "I3.2", "I3.3", "I3.4"],
+      "missed": [],
+      "fp": 0,
+      "fp_examples": [],
+      "bonus": [
+        "£9/mo is consumer pricing for a B2B workflow tool, worsens CAC problem (idea-1)",
+        "4.2-star delisting threshold is trivially gameable (idea-2)",
+        "true blocking moat is Apple/Google's Screen Time API, not the prompt (idea-3)"
+      ],
+      "clean_verdict": "SOUND",
+      "errors": []
+    },
+    "mistralai/mistral-large-2512": {
+      "caught": ["I1.1", "I1.2", "I1.3", "I1.4", "I2.1", "I2.2", "I2.3", "I2.4", "I3.1", "I3.2", "I3.3"],
+      "missed": ["I3.4"],
+      "fp": 0,
+      "fp_examples": [],
+      "bonus": [
+        "MAP-style retail-partner blacklisting risk from permanent direct discount (idea-3)",
+        "staff-training logs make LeadPolish a GDPR data controller (idea-1)",
+        "hardware waitlist-to-purchase conversion is typically 1-5%, not enough to fund the ask (idea-3)"
+      ],
+      "clean_verdict": "NOISY",
+      "errors": []
+    },
+    "moonshotai/kimi-k2.5": {
+      "caught": ["I1.1", "I1.2", "I1.3", "I1.4", "I2.1", "I2.2", "I2.3", "I2.4", "I3.1", "I3.2", "I3.3", "I3.4"],
+      "missed": [],
+      "fp": 0,
+      "fp_examples": [],
+      "bonus": [
+        "cold-email spam-complaint rate would blacklist sending domain within 14 days (idea-1)",
+        "iOS Screen Time API can't be driven by a third-party NFC trigger the way described (idea-3)",
+        "onboarding labor cost alone (£37.50) exceeds 5-month LTV, negative gross margin (idea-1)"
+      ],
+      "clean_verdict": "NOISY",
+      "errors": []
+    },
+    "openai/gpt-5.1": {
+      "caught": ["I1.1", "I1.2", "I1.3", "I1.4", "I2.1", "I2.2", "I2.3", "I2.4", "I3.1", "I3.2", "I3.3", "I3.4"],
+      "missed": [],
+      "fp": 0,
+      "fp_examples": [],
+      "bonus": [
+        "outbound loop needs 5,000 emails to net ~£900 MRR, weak ROI on the growth loop (idea-1)",
+        "UK-only TAM framing is inconsistent with stated UK+EU outbound scope (idea-1)",
+        "star-rating trust mechanism can't stop a single catastrophic allergen incident (idea-2)"
+      ],
+      "clean_verdict": "SOUND",
+      "errors": []
+    },
+    "qwen/qwen3.7-plus": {
+      "caught": ["I1.1", "I1.2", "I1.3", "I1.4", "I2.1", "I2.2", "I2.3", "I2.4", "I3.1", "I3.2", "I3.3"],
+      "missed": ["I3.4"],
+      "fp": 0,
+      "fp_examples": [],
+      "bonus": [
+        "lettings negotiators are junior staff without purchase authority (idea-1)",
+        "untracked-mail item-not-received disputes would wipe out DTC margin (idea-3)",
+        "UN38.3/UKCA/WEEE certification costs are unbudgeted (idea-3)"
+      ],
+      "clean_verdict": "SOUND",
+      "errors": []
+    },
+    "x-ai/grok-4.3": {
+      "caught": ["I1.1", "I1.2", "I1.3", "I1.4", "I2.1", "I2.2", "I2.3", "I2.4", "I3.1", "I3.2", "I3.3", "I3.4"],
+      "missed": [],
+      "fp": 0,
+      "fp_examples": [],
+      "bonus": [
+        "Deliveroo/Uber Eats already run dark-kitchen/home-chef pilots, undercutting the 'can't do this' claim (idea-2)",
+        "retail-channel margin after COGS+shipping leaves only ~£2/unit before returns or fees (idea-3)",
+        "shipping-cost figures (£4.50 avg vs <£2 international) contradict each other (idea-3)"
+      ],
+      "clean_verdict": "SOUND",
+      "errors": []
+    },
+    "xiaomi/mimo-v2.5-pro": {
+      "caught": ["I1.1", "I1.2", "I1.3", "I1.4", "I2.2", "I2.3", "I2.4", "I3.1", "I3.2", "I3.3", "I3.4"],
+      "missed": ["I2.1"],
+      "fp": 0,
+      "fp_examples": [],
+      "bonus": [
+        "iOS third-party apps can't programmatically block other apps the way the pitch describes (idea-3)",
+        "fixed 20k-agency market gets exhausted by outbound within 12-18 months even before churn (idea-1)",
+        "£11 COGS for custom anodised aluminium + battery at 5k units is unrealistically low (idea-3)"
+      ],
+      "clean_verdict": "SOUND",
+      "errors": []
+    },
+    "z-ai/glm-5.2": {
+      "caught": ["I1.1", "I1.2", "I1.3", "I1.4", "I2.1", "I2.2", "I2.3", "I2.4", "I3.1", "I3.2", "I3.3", "I3.4"],
+      "missed": [],
+      "fp": 0,
+      "fp_examples": [],
+      "bonus": [
+        "£150k ask can't cover two integration hires within 12-month runway (idea-1)",
+        "direct-channel £1.90/unit gross leaves no room for CAC/ad spend (idea-3)",
+        "Deliveroo/Uber Eats fake-moat: zero marginal cost is a supply-reliability weakness, not an advantage (idea-2)"
+      ],
+      "clean_verdict": "SOUND",
+      "errors": []
+    }
+  }
+}

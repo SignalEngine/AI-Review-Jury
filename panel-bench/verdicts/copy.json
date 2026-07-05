@@ -1,0 +1,264 @@
+{
+ "preset": "copy",
+ "models": {
+  "deepseek/deepseek-v4-pro": {
+   "caught": [
+    "C1.1",
+    "C1.2",
+    "C1.3",
+    "C1.4",
+    "C2.1",
+    "C2.2",
+    "C2.3",
+    "C2.4",
+    "C3.1",
+    "C3.2",
+    "C3.3",
+    "C3.4"
+   ],
+   "missed": [],
+   "fp": 1,
+   "fp_examples": [
+    "copy-2: claimed the footer 'Last updated June 2026' is itself an 'impossible future/timestamp error' \u2014 not an actual inconsistency (the real flaw, the March-2026-deadline-vs-June-2026-stamp conflict, was separately caught correctly)"
+   ],
+   "bonus": [
+    "copy-3: flagged the unsubstantiated '8-12 hours saved' claim as an ASA-risk performance claim with no evidence"
+   ],
+   "clean_verdict": "NOISY",
+   "errors": []
+  },
+  "google/gemini-3.1-pro-preview": {
+   "caught": [
+    "C1.1",
+    "C1.2",
+    "C1.3",
+    "C1.4",
+    "C2.1",
+    "C2.2",
+    "C2.3",
+    "C2.4",
+    "C3.1",
+    "C3.2",
+    "C3.3",
+    "C3.4"
+   ],
+   "missed": [],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "copy-3: called out the P.S. pre-announced double follow-up as a self-defeating spam trigger"
+   ],
+   "clean_verdict": "SOUND",
+   "errors": []
+  },
+  "minimax/minimax-m3": {
+   "caught": [
+    "C1.1",
+    "C1.2",
+    "C1.3",
+    "C1.4",
+    "C2.1",
+    "C2.2",
+    "C2.3",
+    "C2.4",
+    "C3.1",
+    "C3.2",
+    "C3.3",
+    "C3.4"
+   ],
+   "missed": [],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "copy-1: 'JobFlow answers' phrasing overpromises phone-call-answering capability not evidenced in the spec",
+    "copy-2: 30-day 'no questions asked' refund on annual plans creates a use-then-refund abuse vector",
+    "copy-3: 'I'll keep this short' opener directly undercut by the 60-minute ask"
+   ],
+   "clean_verdict": "NOISY",
+   "errors": []
+  },
+  "mistralai/mistral-large-2512": {
+   "caught": [
+    "C1.1",
+    "C1.2",
+    "C1.4",
+    "C2.1",
+    "C2.2",
+    "C2.3",
+    "C2.4",
+    "C3.1",
+    "C3.2",
+    "C3.3",
+    "C3.4"
+   ],
+   "missed": [
+    "C1.3"
+   ],
+   "fp": 1,
+   "fp_examples": [
+    "copy-2: asserted 'Competitors like PandaDoc have been fined for similar [most-popular-badge] tactics' \u2014 a fabricated, unsupported specific claim"
+   ],
+   "bonus": [
+    "copy-2: 30-day refund guarantee scope excludes monthly-plan buyers, inviting disputes",
+    "copy-3: two-touch follow-up cadence framed as harassment risk"
+   ],
+   "clean_verdict": "NOISY",
+   "errors": []
+  },
+  "moonshotai/kimi-k2.5": {
+   "caught": [
+    "C1.1",
+    "C1.2",
+    "C1.3",
+    "C1.4",
+    "C2.1",
+    "C2.3",
+    "C2.4",
+    "C3.1",
+    "C3.2",
+    "C3.3",
+    "C3.4"
+   ],
+   "missed": [
+    "C2.2"
+   ],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "copy-1: flagged GDPR purpose-misrepresentation risk from CTA mislabeling (trial copy vs demo-booking data collection)",
+    "copy-1: 'JobFlow answers' framed as overpromising phone-answering capability"
+   ],
+   "clean_verdict": "NOISY",
+   "errors": []
+  },
+  "openai/gpt-5.1": {
+   "caught": [
+    "C1.1",
+    "C1.2",
+    "C1.3",
+    "C1.4",
+    "C2.1",
+    "C2.2",
+    "C2.3",
+    "C2.4",
+    "C3.1",
+    "C3.2",
+    "C3.3",
+    "C3.4"
+   ],
+   "missed": [],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "copy-1: 'JobFlow answers' may overpromise call-answering capability beyond scheduling software",
+    "copy-3: pre-announced Thursday/Monday follow-up cadence risks spam complaints",
+    "copy-3: unsubstantiated 8-12 hours claim lacks source/case study"
+   ],
+   "clean_verdict": "SOUND",
+   "errors": []
+  },
+  "qwen/qwen3.7-plus": {
+   "caught": [
+    "C1.1",
+    "C1.2",
+    "C1.3",
+    "C1.4",
+    "C2.1",
+    "C2.2",
+    "C2.3",
+    "C2.4",
+    "C3.1",
+    "C3.2",
+    "C3.3",
+    "C3.4"
+   ],
+   "missed": [],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "copy-2: 30-day no-questions-asked refund on annual plan enables use-then-refund abuse",
+    "copy-3: unsubstantiated 8-12 hours savings claim lacks evidence",
+    "copy-3: counterproductive pre-announced follow-up framing invites spam-marking"
+   ],
+   "clean_verdict": "NOISY",
+   "errors": []
+  },
+  "x-ai/grok-4.3": {
+   "caught": [
+    "C1.1",
+    "C1.2",
+    "C1.3",
+    "C1.4",
+    "C2.1",
+    "C2.2",
+    "C2.3",
+    "C2.4",
+    "C3.2",
+    "C3.3",
+    "C3.4"
+   ],
+   "missed": [
+    "C3.1"
+   ],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "copy-2: 30-day money-back guarantee lacks defined terms, inviting late-stage disputes",
+    "copy-3: unsubstantiated 8-12 hrs/month time-saving claim"
+   ],
+   "clean_verdict": "SOUND",
+   "errors": []
+  },
+  "xiaomi/mimo-v2.5-pro": {
+   "caught": [
+    "C1.1",
+    "C1.2",
+    "C1.3",
+    "C1.4",
+    "C2.1",
+    "C2.2",
+    "C2.3",
+    "C2.4",
+    "C3.1",
+    "C3.2",
+    "C3.3",
+    "C3.4"
+   ],
+   "missed": [],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "copy-3: unsubstantiated 8-12 hours claim called out as aspirational without case-study backing",
+    "copy-3: pre-announced follow-up cadence reads as pressure rather than persistence"
+   ],
+   "clean_verdict": "SOUND",
+   "errors": []
+  },
+  "z-ai/glm-5.2": {
+   "caught": [
+    "C1.1",
+    "C1.2",
+    "C1.3",
+    "C1.4",
+    "C2.1",
+    "C2.2",
+    "C2.3",
+    "C2.4",
+    "C3.1",
+    "C3.2",
+    "C3.3",
+    "C3.4"
+   ],
+   "missed": [],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "copy-2: refund guarantee excludes monthly-plan subscribers entirely",
+    "copy-3: unsubstantiated 8-12 hours claim lacks source/methodology",
+    "copy-3: aggressive two-touch follow-up cadence risks spam flag"
+   ],
+   "clean_verdict": "SOUND",
+   "errors": []
+  }
+ }
+}

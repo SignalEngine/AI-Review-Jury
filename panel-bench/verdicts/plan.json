@@ -1,0 +1,271 @@
+{
+ "preset": "plan",
+ "models": {
+  "deepseek/deepseek-v4-pro": {
+   "caught": [
+    "P1.1",
+    "P1.2",
+    "P1.3",
+    "P1.4",
+    "P2.1",
+    "P2.2",
+    "P2.3",
+    "P2.4",
+    "P3.2",
+    "P3.3",
+    "P3.4"
+   ],
+   "missed": [
+    "P3.1"
+   ],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "plan-1: flagged the ID rewrite (ord_XXXX->ULID) breaking the backfill join key even independent of the drop",
+    "plan-1: flagged in-place ID rewrite orphaning FK references in child tables",
+    "plan-2: flagged marketing banner promising old rates while checkout already charges new prices Monday morning"
+   ],
+   "clean_verdict": "SOUND",
+   "errors": []
+  },
+  "google/gemini-3.1-pro-preview": {
+   "caught": [
+    "P1.1",
+    "P1.2",
+    "P1.3",
+    "P2.1",
+    "P2.2",
+    "P2.3",
+    "P3.1",
+    "P3.2",
+    "P3.3",
+    "P3.4"
+   ],
+   "missed": [
+    "P1.4",
+    "P2.4"
+   ],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "plan-1: race condition on new writes landing mid-rewrite in legacy format",
+    "plan-3: missing dual-writes for users/roles created between Day-1 backfill and Day-7 cutover",
+    "plan-3: rollback (use_legacy_roles) destroyed once legacy code removed, before the stated Day-10 deadline"
+   ],
+   "clean_verdict": "NOISY",
+   "errors": []
+  },
+  "minimax/minimax-m3": {
+   "caught": [
+    "P1.1",
+    "P1.2",
+    "P1.3",
+    "P1.4",
+    "P2.1",
+    "P2.2",
+    "P2.3",
+    "P3.1",
+    "P3.2",
+    "P3.3",
+    "P3.4"
+   ],
+   "missed": [
+    "P2.4"
+   ],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "plan-1: replication-lag risk from a 40-min PK rewrite under live traffic, plus FK blast radius not addressed",
+    "plan-1: the stated reason for dropping orders_v1 early (freeing storage for step 4's 'copy') is wrong since step 4 is an in-place rewrite, not a copy",
+    "plan-3: Day-10 cleanup (drop role column) coincides with the rollback deadline, destroying the rollback's last dependency at the exact moment it's needed"
+   ],
+   "clean_verdict": "SOUND",
+   "errors": []
+  },
+  "mistralai/mistral-large-2512": {
+   "caught": [
+    "P1.1",
+    "P1.2",
+    "P1.3",
+    "P1.4",
+    "P2.2",
+    "P2.3",
+    "P3.1",
+    "P3.3"
+   ],
+   "missed": [
+    "P2.1",
+    "P2.4",
+    "P3.2",
+    "P3.4"
+   ],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "plan-2: rollback assumes old Stripe price IDs remain active/unarchived, unverified",
+    "plan-3: 5-minute middleware cache could mask misconfigurations during rollout",
+    "plan-3: no dry-run/validation step for the Day-1 backfill"
+   ],
+   "clean_verdict": "SOUND",
+   "errors": []
+  },
+  "moonshotai/kimi-k2.5": {
+   "caught": [
+    "P1.1",
+    "P1.2",
+    "P1.3",
+    "P1.4",
+    "P2.1",
+    "P2.2",
+    "P2.3",
+    "P3.1",
+    "P3.2",
+    "P3.3",
+    "P3.4"
+   ],
+   "missed": [
+    "P2.4"
+   ],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "plan-1: race condition between rewrite completion estimate and backfill start time",
+    "plan-2: 9am-10am window where marketing site still shows old price while checkout already charges new price"
+   ],
+   "clean_verdict": "ERROR",
+   "errors": [
+    "plan-0-clean"
+   ]
+  },
+  "openai/gpt-5.1": {
+   "caught": [
+    "P1.1",
+    "P1.2",
+    "P1.3",
+    "P1.4",
+    "P2.1",
+    "P2.2",
+    "P2.3",
+    "P2.4",
+    "P3.1",
+    "P3.3",
+    "P3.4"
+   ],
+   "missed": [
+    "P3.2"
+   ],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "plan-1: no documented rollback/disable plan for the new_checkout flag itself",
+    "plan-2: rollback plan doesn't cover already-migrated subscriptions",
+    "plan-3: removing legacy checks before permissions-service is proven safe under full prod load is irreversible in practice"
+   ],
+   "clean_verdict": "SOUND",
+   "errors": []
+  },
+  "qwen/qwen3.7-plus": {
+   "caught": [
+    "P1.1",
+    "P1.2",
+    "P1.3",
+    "P2.1",
+    "P2.2",
+    "P2.3",
+    "P3.1",
+    "P3.2",
+    "P3.3",
+    "P3.4"
+   ],
+   "missed": [
+    "P1.4",
+    "P2.4"
+   ],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "plan-1: mixed ID formats from orders written during the rewrite window (writer code not yet switched to ULID)",
+    "plan-1: smoke test (placed post-deploy) writes ULIDs and passes, masking poisoned pre-rewrite rows"
+   ],
+   "clean_verdict": "SOUND",
+   "errors": []
+  },
+  "x-ai/grok-4.3": {
+   "caught": [
+    "P1.1",
+    "P1.2",
+    "P1.3",
+    "P2.1",
+    "P2.2",
+    "P2.3",
+    "P2.4",
+    "P3.3",
+    "P3.4"
+   ],
+   "missed": [
+    "P1.4",
+    "P3.1",
+    "P3.2"
+   ],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "plan-1: mixed ID formats break FK lookups and admin-panel displays during the rewrite window",
+    "plan-3: no verification step before flipping the 41 flagged admin accounts to read-only"
+   ],
+   "clean_verdict": "SOUND",
+   "errors": []
+  },
+  "xiaomi/mimo-v2.5-pro": {
+   "caught": [
+    "P1.1",
+    "P1.2",
+    "P1.3",
+    "P1.4",
+    "P2.1",
+    "P2.2",
+    "P2.3",
+    "P2.4",
+    "P3.1",
+    "P3.2",
+    "P3.3",
+    "P3.4"
+   ],
+   "missed": [],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "plan-2: rollback only covers the new-signup flow, not the already-migrated existing subscriptions",
+    "plan-0-clean: shadow-read comparison will produce near-100% false-positive mismatches on today-inclusive date ranges due to non-atomic MVCC snapshots at ~2 writes/sec"
+   ],
+   "clean_verdict": "SOUND",
+   "errors": []
+  },
+  "z-ai/glm-5.2": {
+   "caught": [
+    "P1.1",
+    "P1.2",
+    "P1.3",
+    "P1.4",
+    "P2.1",
+    "P2.2",
+    "P2.3",
+    "P2.4",
+    "P3.1",
+    "P3.2",
+    "P3.3",
+    "P3.4"
+   ],
+   "missed": [],
+   "fp": 0,
+   "fp_examples": [],
+   "bonus": [
+    "plan-1: 'read-only' orders_v1 conflated with 'safe to drop' -- live reads may still hit it before v2 read path deploys",
+    "plan-3: 'flip DB rows as part of the backfill' misleads -- backfill already ran Day 1, demotion is a separate Day-2 UPDATE",
+    "plan-0-clean: no ANALYZE after CREATE INDEX CONCURRENTLY, so planner may not adopt the new index"
+   ],
+   "clean_verdict": "SOUND",
+   "errors": []
+  }
+ }
+}

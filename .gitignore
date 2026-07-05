@@ -6,3 +6,4 @@ panel.conf
 .jury-last-tuned
 *.tmp
 .DS_Store
+panel-bench/out/
