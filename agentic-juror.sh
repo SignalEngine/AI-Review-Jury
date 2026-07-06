@@ -26,7 +26,10 @@ START=$(date +%s)
 
 PROMPT="You are reviewing commit $SHA in this git repo for CORRECTNESS bugs and security issues only — not style. First run: git show $SHA  to see the diff. Then USE THE REPO: read the full files the diff touches and any callers/config they interact with, to verify each suspicion against the real code beyond the diff hunks. Report each finding as P1 (blocking) / P2 (likely bug) / P3 (minor) with file:line and one concrete failing input/state. If part of the diff is correct, don't invent problems. Finish with a FINDINGS list."
 
-cd "$WT" && ANTHROPIC_BASE_URL="https://openrouter.ai/api" \
+# CLAUDE_AUTOCAPTURE=1 marks this as pipeline-internal so the session-memory hooks
+# skip it (inferred from brain-consolidate.sh's use; unmarked smoke runs each spawned
+# a ~$0.12 distill child and polluted the auto notes — verify on next run).
+cd "$WT" && CLAUDE_AUTOCAPTURE=1 ANTHROPIC_BASE_URL="https://openrouter.ai/api" \
   ANTHROPIC_API_KEY="$KEY" \
   ANTHROPIC_AUTH_TOKEN="$KEY" \
   ANTHROPIC_MODEL="z-ai/glm-5.2" \
