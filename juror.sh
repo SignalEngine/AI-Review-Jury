@@ -71,10 +71,13 @@ print(json.dumps({
   "temperature": 0,
 }))' "$PROMPT" "$DIFF" "$MODEL" "$MAX")
 
-curl -s -m "${REVIEW_TIMEOUT:-280}" https://openrouter.ai/api/v1/chat/completions \
-  -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" \
-  -H "X-Title: AI Review Jury" \
-  -d "$REQ" | python3 -c '
+# OpenRouter drops ~4% of calls (truncated/non-JSON; measured 2026-07-05, 7/7 recovered
+# on one retry) — so try twice before reporting an error.
+run_review() {
+  curl -s -m "${REVIEW_TIMEOUT:-280}" https://openrouter.ai/api/v1/chat/completions \
+    -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" \
+    -H "X-Title: AI Review Jury" \
+    -d "$REQ" | python3 -c '
 import json,sys
 raw = sys.stdin.read()
 try:
@@ -90,3 +93,10 @@ try:
 except Exception:
   print("✗ unexpected response shape; first 300 chars:"); print(raw[:300]); sys.exit(1)
 print(txt if txt else "(empty response)")'
+}
+OUT="$(run_review)"
+if printf '%s' "$OUT" | grep -q '^✗\|^(empty response)$'; then
+  echo "◆ retrying $MODEL (bad response)" >&2
+  OUT="$(run_review)"
+fi
+printf '%s\n' "$OUT"
