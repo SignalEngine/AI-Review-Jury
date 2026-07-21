@@ -66,7 +66,9 @@ run(){ local sha="$1" m="$2"; local s="${m//\//_}"
 export -f run; export HERE OUT
 echo "◆ running $(echo "$ALL" | tr ',' '\n' | wc -l) models × ${#COMMITS[@]} diffs…" >&2
 IFS=',' read -ra MLIST <<< "$ALL"
-{ for sha in "${COMMITS[@]}"; do for m in "${MLIST[@]}"; do echo "$sha $m"; done; done; } | xargs -P 6 -I{} bash -c 'run "$1" "$2"' _ {}
+# -n 2: sha + model as two argv tokens (the old -I{} passed the pair as ONE
+# arg → run() saw m="" and built "sha model__.txt" paths that never existed).
+{ for sha in "${COMMITS[@]}"; do for m in "${MLIST[@]}"; do echo "$sha $m"; done; done; } | xargs -P 6 -n 2 bash -c 'run "$1" "$2"' _
 
 printf "incumbents=%s\nchallengers=%s\ndiffs=%s\n" "$INCUMBENTS" "${CH:-none}" "${COMMITS[*]}" > "$OUT/candidates.txt"
 echo "◆ collected → $OUT/reviews/ ($(ls "$OUT/reviews" | wc -l) reviews). Next: /jury-tune judges + rewrites panel.conf." >&2
