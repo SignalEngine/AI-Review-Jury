@@ -22,8 +22,19 @@ insts=""; [ -f "$HOME/.claude/commands/jury.md" ] && insts+="/jury "; [ -d "$HOM
 # 4. repo live + in sync with origin
 if git -C "$HERE" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git -C "$HERE" fetch -q origin 2>/dev/null || true
-  l="$(git -C "$HERE" rev-parse HEAD 2>/dev/null)"; r="$(git -C "$HERE" rev-parse '@{u}' 2>/dev/null || echo "$l")"
-  [ "$l" = "$r" ] && say "✓" "repo LIVE + in sync @ $(git -C "$HERE" rev-parse --short HEAD)" || say "✗" "repo BEHIND origin — git pull ($(git -C "$HERE" rev-parse --short HEAD) vs ${r:0:7})"
+  # ponytail: SHA equality can't tell ahead from behind — and it printed "git pull"
+  # at someone sitting on unpushed commits, which is the direction that can leak.
+  at="$(git -C "$HERE" rev-parse --short HEAD)"
+  if c="$(git -C "$HERE" rev-list --left-right --count 'HEAD...@{u}' 2>/dev/null)"; then
+    a="${c%%[[:space:]]*}"; b="${c##*[[:space:]]}"
+    if   [ "$a" -eq 0 ] && [ "$b" -eq 0 ]; then say "✓" "repo LIVE + in sync @ $at"
+    elif [ "$a" -gt 0 ] && [ "$b" -gt 0 ]; then say "✗" "repo DIVERGED @ $at — $a ahead, $b behind (rebase)"
+    elif [ "$b" -gt 0 ];                   then say "✗" "repo BEHIND origin @ $at — $b behind (git pull)"
+    else say "○" "repo AHEAD @ $at — $a unpushed; review WHAT is in them before pushing (this remote is public)"
+    fi
+  else
+    say "○" "no upstream branch — can't compare"
+  fi
 else
   say "○" "not a git checkout (can't verify live)"
 fi

@@ -32,6 +32,7 @@ PANEL_DEFAULT="z-ai/glm-5.2,minimax/minimax-m3"
 PANEL_FILE=""
 [ -f "$HERE/panel.conf" ] && PANEL_FILE="$(grep -vE '^[[:space:]]*(#|$)' "$HERE/panel.conf" | head -1 | tr -d '[:space:]')"
 MODELS="${MODELS:-${PANEL_FILE:-$PANEL_DEFAULT}}"
+export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-$(/root/.local/bin/ork 2>/dev/null)}"
 [ -n "${OPENROUTER_API_KEY:-}" ] || { echo "✗ OPENROUTER_API_KEY not set" >&2; exit 1; }
 
 # Staleness nudge: new models ship constantly and a leaderboard rank doesn't transfer,

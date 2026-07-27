@@ -16,6 +16,7 @@
 # only after a 10-commit bench like the diff-only one.
 set -uo pipefail
 WT="$1"; SHA="$2"; OUT="$3"
+export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-$(/root/.local/bin/ork 2>/dev/null)}"
 KEY="${OPENROUTER_API_KEY:-}"
 [ -n "$KEY" ] || { echo "✗ OPENROUTER_API_KEY not set" >&2; exit 1; }
 

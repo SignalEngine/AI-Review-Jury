@@ -23,6 +23,7 @@
 #   MAX_CHARS           truncate input (default 60000)
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
+export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-$(/root/.local/bin/ork 2>/dev/null)}"
 [ -n "${OPENROUTER_API_KEY:-}" ] || { echo "✗ OPENROUTER_API_KEY not set" >&2; exit 1; }
 
 PRESET="generic"

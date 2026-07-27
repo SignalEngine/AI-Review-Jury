@@ -15,6 +15,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 OUT="${OUT:-./jury-tune-run}"
 N_DIFFS="${N_DIFFS:-8}"
 N_CHALLENGERS="${N_CHALLENGERS:-5}"
+export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-$(/root/.local/bin/ork 2>/dev/null)}"
 [ -n "${OPENROUTER_API_KEY:-}" ] || { echo "✗ OPENROUTER_API_KEY not set" >&2; exit 1; }
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "✗ run inside the repo to benchmark against" >&2; exit 1; }
 mkdir -p "$OUT/reviews"
