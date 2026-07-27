@@ -36,7 +36,13 @@ while read -r _lref lsha _rref rsha; do
   # 2026-07-27 by executing it, not by reading it. An unknown range is not an
   # empty range — if we cannot enumerate what is being pushed, we refuse.
   if [ "$rsha" = "$Z" ]; then
-    raw="$(git rev-list "$lsha" --not --remotes="$REMOTE" 2>&1)" || raw="!"
+    # Scan EVERYTHING reachable. Excluding commits that local remote-tracking refs
+    # claim are already published is unsound: those refs go stale, and survive the
+    # remote being repointed at a different URL — so a commit "already on origin"
+    # may never have been on THIS remote. Reproduced by review-gate, 07-27.
+    # ponytail: O(history) per new-branch push; fine at this repo's size. If it ever
+    # matters, ask the remote itself with ls-remote rather than trusting local refs.
+    raw="$(git rev-list "$lsha" 2>&1)" || raw="!"
   else
     raw="$(git rev-list "$rsha..$lsha" 2>&1)" || raw="!"
   fi
