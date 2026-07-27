@@ -94,9 +94,24 @@ fi
 # it), so an uninstalled guard is the default state. Report it every session rather
 # than assuming it — a guard nobody installed is not a guard. (review-gate P1, 07-27)
 hp="$(git -C "$HERE" config core.hooksPath 2>/dev/null)"
-guard="$HERE/${hp:-.git/hooks}/pre-push"
-if [ -x "$guard" ]; then say "✓" "private-file push guard active (${hp:-.git/hooks}/pre-push)"
-else say "✗" "push guard NOT installed — private files can reach this PUBLIC remote. Fix: git -C $HERE config core.hooksPath hooks"; fi
+case "${hp:-}" in
+  /*) guard="$hp/pre-push" ;;                      # absolute hooksPath
+  "") guard="$HERE/.git/hooks/pre-push" ;;
+  *)  guard="$HERE/$hp/pre-push" ;;
+esac
+# PROBE it, don't just stat it. Testing `-x` certifies any executable — including a
+# stub containing `exit 0` — as "the privacy guard" (review-gate P2, 07-27). Feed it
+# an unresolvable range: a working guard fails CLOSED (non-zero), a stub returns 0.
+probe(){ printf 'refs/heads/probe %s refs/heads/probe %s\n' \
+  1111111111111111111111111111111111111111 2222222222222222222222222222222222222222 \
+  | "$guard" origin probe >/dev/null 2>&1; }
+if [ -x "$guard" ] && ! probe; then
+  say "✓" "private-file push guard active AND blocking (probed, not just present)"
+elif [ -x "$guard" ]; then
+  say "✗" "a pre-push hook exists but does NOT block — it is not this guard (inert stub?)"
+else
+  say "✗" "push guard NOT installed — private files can reach this PUBLIC remote. Fix: git -C $HERE config core.hooksPath hooks"
+fi
 
 # 6. panel freshness (jury-tune stamps this)
 if [ -f "$HERE/.jury-last-tuned" ]; then
