@@ -53,11 +53,11 @@ print(json.dumps({"model":sys.argv[3],"temperature":0,
 import json,sys
 raw=sys.stdin.read()
 try: d=json.loads(raw)
-except Exception: print("(non-JSON response)"); sys.exit()
-if isinstance(d,dict) and d.get("error"): print("(model error:",d["error"],")"); sys.exit()
+except Exception: print("(non-JSON response)"); sys.exit(1)
+if isinstance(d,dict) and d.get("error"): print("(model error:",d["error"],")"); sys.exit(1)
 try:
   m=d["choices"][0]["message"]; print(m.get("content") or m.get("reasoning") or "(empty)")
-except Exception: print("(bad shape:",raw[:200],")")'
+except Exception: print("(bad shape:",raw[:200],")"); sys.exit(1)'
 }
 
 FOCUS_LINE="${FOCUS:+ Focus on: $FOCUS.}"
@@ -106,7 +106,7 @@ TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 i=0
 for m in "${PROPOSERS[@]}"; do
   i=$((i+1))
-  ( call "$m" "$P_PROPOSE" > "$TMP/opt$i" 2>&1 ) &
+  ( call "$m" "$P_PROPOSE" > "$TMP/opt$i" 2>&1 || touch "$TMP/opt$i.fail" ) &
 done
 wait
 
@@ -135,6 +135,10 @@ Then score EVERY surviving option 1-5 on each axis, with a one-line reason per s
 Then rank them by total, and state in one line WHAT WOULD HAVE TO BE TRUE for the bottom-ranked option to beat the top one. Be terse. Do not invent new options."
 
 echo; echo "═══ 2 · SCORED ($M_JUDGE) ═══"
+if compgen -G "$TMP/*.fail" >/dev/null 2>&1; then
+  echo >&2; echo "✗ proposer(s) FAILED above — refusing to judge/rank error text," >&2
+  echo "  and NOT appending to the ledger." >&2; exit 1
+fi
 SCORES=$(call "$M_JUDGE" "$(printf '%s' "$BUNDLE")
 
 $P_JUDGE")
@@ -159,7 +163,7 @@ OUT=$(call "$M_SYNTH" "$(printf '%s' "$BUNDLE")
 JUDGE SAID:
 $SCORES
 
-$P_SYNTH")
+$P_SYNTH") || { echo "✗ synthesis failed — NOT appending to the ledger" >&2; exit 1; }
 echo "$OUT"
 
 # ── 4. LEDGER ────────────────────────────────────────────────────────────────

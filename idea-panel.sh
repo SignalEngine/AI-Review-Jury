@@ -46,11 +46,11 @@ print(json.dumps({"model":sys.argv[3],"temperature":0,
 import json,sys
 raw=sys.stdin.read()
 try: d=json.loads(raw)
-except Exception: print("(non-JSON response)"); sys.exit()
-if isinstance(d,dict) and d.get("error"): print("(model error:",d["error"],")"); sys.exit()
+except Exception: print("(non-JSON response)"); sys.exit(1)
+if isinstance(d,dict) and d.get("error"): print("(model error:",d["error"],")"); sys.exit(1)
 try:
   m=d["choices"][0]["message"]; print(m.get("content") or m.get("reasoning") or "(empty)")
-except Exception: print("(bad shape:",raw[:200],")")'
+except Exception: print("(bad shape:",raw[:200],")"); sys.exit(1)'
 }
 
 FOCUS_LINE="${FOCUS:+ The user asks you to focus on: $FOCUS.}"
@@ -77,15 +77,22 @@ PRIOR_DECISIONS="$(grep -A2 '^### DECISION' "$HERE/idea-ledger.md" 2>/dev/null |
 
 # ── 1. THREE ROLE-DIVERSE PERSPECTIVES (parallel) ────────────────────────────
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
-( call "$M_ADV"  "$P_ADV"  > "$TMP/adv"  2>&1 ) &
-( call "$M_SKEP" "$P_SKEP" > "$TMP/skep" 2>&1 ) &
-( call "$M_RES"  "$P_RES"  > "$TMP/res"  2>&1 ) &
+( call "$M_ADV"  "$P_ADV"  > "$TMP/adv"  2>&1 || touch "$TMP/adv.fail"  ) &
+( call "$M_SKEP" "$P_SKEP" > "$TMP/skep" 2>&1 || touch "$TMP/skep.fail" ) &
+( call "$M_RES"  "$P_RES"  > "$TMP/res"  2>&1 || touch "$TMP/res.fail"  ) &
 wait
 echo; echo "═══ 1 · PERSPECTIVES ═══"
 for r in "ADVOCATE:$M_ADV:adv" "SKEPTIC:$M_SKEP:skep" "RESEARCHER:$M_RES:res"; do
   IFS=: read -r label model file <<<"$r"
   echo; echo "── $label ($model) ──"; cat "$TMP/$file"
 done
+
+# A map synthesized from error strings is indistinguishable from a real one once
+# it is in the ledger. If any perspective failed, stop here (review-gate P2, 07-27).
+if compgen -G "$TMP/*.fail" >/dev/null 2>&1; then
+  echo >&2; echo "✗ perspective(s) FAILED above — refusing to synthesize a divergence map" >&2
+  echo "  from error text, and NOT appending to the ledger." >&2; exit 1
+fi
 
 # ── 2. DIVERGENCE MAP ────────────────────────────────────────────────────────
 BUNDLE="ADVOCATE said:\n$(cat "$TMP/adv")\n\nSKEPTIC said:\n$(cat "$TMP/skep")\n\nRESEARCHER said:\n$(cat "$TMP/res")"
@@ -100,7 +107,8 @@ $PRIOR_DECISIONS}"
 echo; echo "═══ 2 · DIVERGENCE MAP ($M_SYNTH) ═══"
 MAP=$(call "$M_SYNTH" "$(printf '%b' "$BUNDLE")
 
-$P_SYNTH")
+$P_SYNTH") || {
+  echo "✗ synthesis failed — NOT appending to the ledger" >&2; exit 1; }
 echo "$MAP"
 
 # ── 3. LEDGER APPEND (capture for later learning) ────────────────────────────
