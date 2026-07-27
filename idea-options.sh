@@ -141,7 +141,7 @@ if compgen -G "$TMP/*.fail" >/dev/null 2>&1; then
 fi
 SCORES=$(call "$M_JUDGE" "$(printf '%s' "$BUNDLE")
 
-$P_JUDGE")
+$P_JUDGE") || { echo "✗ judge failed — NOT ranking or appending to the ledger" >&2; exit 1; }
 echo "$SCORES"
 
 # ── 3. SYNTHESIS ─────────────────────────────────────────────────────────────

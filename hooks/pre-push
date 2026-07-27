@@ -13,6 +13,13 @@
 # ponytail: one explicit list, no config file. Add names to PRIVATE as they appear.
 set -uo pipefail
 
+# git passes <remote-name> <remote-url>. Excluding commits present on a hardcoded
+# "origin" is wrong when pushing to a DIFFERENT remote: with an internal origin and
+# a public remote, everything already on origin was skipped and the private file
+# published (review-gate P1, 07-27). An unknown/URL remote matches no refs, so the
+# scan widens rather than narrows — the safe direction.
+REMOTE="${1:-origin}"
+
 PRIVATE='^(idea-ledger\.md|.*\.private\.md)$'
 Z=0000000000000000000000000000000000000000
 bad=0
@@ -26,7 +33,7 @@ while read -r _lref lsha _rref rsha; do
   # 2026-07-27 by executing it, not by reading it. An unknown range is not an
   # empty range — if we cannot enumerate what is being pushed, we refuse.
   if [ "$rsha" = "$Z" ]; then
-    raw="$(git rev-list "$lsha" --not --remotes=origin 2>&1)" || raw="!"
+    raw="$(git rev-list "$lsha" --not --remotes="$REMOTE" 2>&1)" || raw="!"
   else
     raw="$(git rev-list "$rsha..$lsha" 2>&1)" || raw="!"
   fi
@@ -38,7 +45,11 @@ while read -r _lref lsha _rref rsha; do
   mapfile -t commits <<< "$raw"
   for c in "${commits[@]}"; do
     [ -n "$c" ] || continue
-    hits="$(git ls-tree -r --name-only "$c" 2>/dev/null | grep -E "$PRIVATE" || true)"
+    if ! tree="$(git ls-tree -r --name-only "$c" 2>/dev/null)"; then
+      printf '✗ pre-push BLOCKED — cannot read the tree of %s; refusing to assume it is clean\n' "${c:0:7}" >&2
+      bad=1; continue
+    fi
+    hits="$(printf '%s\n' "$tree" | grep -E "$PRIVATE" || true)"
     if [ -n "$hits" ]; then
       printf '✗ pre-push BLOCKED — %s carries private file(s):\n' "${c:0:7}" >&2
       printf '%s\n' "$hits" | sed 's/^/      /' >&2

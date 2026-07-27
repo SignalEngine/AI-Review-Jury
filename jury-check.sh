@@ -24,7 +24,9 @@ sync_state(){ # repo -> sync | "ahead N" | "behind N" | "diverged A B" | noupstr
 if [ "${1:-}" = "--selftest" ]; then
   # Falsification test: build real repos in each state, demand the RIGHT answer.
   # Inverting sync_state must turn these red — that is what makes it a test.
-  t="$(mktemp -d)"; trap 'rm -rf "$t"' EXIT; fails=0
+  t="$(mktemp -d)" || t=""
+  { [ -n "$t" ] && [ -d "$t" ]; } || { echo "✗ selftest: mktemp -d failed — refusing to run with an empty \$t" >&2; exit 2; }
+  trap 'rm -rf "$t"' EXIT; fails=0
   q(){ git -C "$1" "${@:2}" >/dev/null 2>&1; }
   git init -q --bare "$t/origin.git"
   git clone -q "$t/origin.git" "$t/wc" 2>/dev/null
@@ -102,10 +104,14 @@ esac
 # PROBE it, don't just stat it. Testing `-x` certifies any executable — including a
 # stub containing `exit 0` — as "the privacy guard" (review-gate P2, 07-27). Feed it
 # an unresolvable range: a working guard fails CLOSED (non-zero), a stub returns 0.
-probe(){ printf 'refs/heads/probe %s refs/heads/probe %s\n' \
-  1111111111111111111111111111111111111111 2222222222222222222222222222222222222222 \
-  | "$guard" origin probe >/dev/null 2>&1; }
-if [ -x "$guard" ] && ! probe; then
+# BOTH directions: an `exit 1` stub blocks the bogus range too, and would be
+# certified while breaking every legitimate push (review-gate P2, 07-27).
+# A real guard REFUSES an unresolvable range and PERMITS a branch deletion.
+_feed(){ printf '%s %s %s %s\n' "$1" "$2" "$3" "$4" | "$guard" origin probe >/dev/null 2>&1; }
+Z0=0000000000000000000000000000000000000000
+probe_blocks(){ ! _feed refs/heads/p 1111111111111111111111111111111111111111 refs/heads/p 2222222222222222222222222222222222222222; }
+probe_permits(){ _feed "(delete)" "$Z0" refs/heads/p 3333333333333333333333333333333333333333; }
+if [ -x "$guard" ] && probe_blocks && probe_permits; then
   say "✓" "private-file push guard active AND blocking (probed, not just present)"
 elif [ -x "$guard" ]; then
   say "✗" "a pre-push hook exists but does NOT block — it is not this guard (inert stub?)"
