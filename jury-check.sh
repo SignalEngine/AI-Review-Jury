@@ -98,7 +98,10 @@ fi
 hp="$(git -C "$HERE" config core.hooksPath 2>/dev/null)"
 case "${hp:-}" in
   /*) guard="$hp/pre-push" ;;                      # absolute hooksPath
-  "") guard="$HERE/.git/hooks/pre-push" ;;
+  "") # in a linked worktree .git is a FILE, so $HERE/.git/hooks never resolves —
+     # ask git for the real hooks dir instead (review-gate P3, 07-27)
+     guard="$(git -C "$HERE" rev-parse --git-path hooks/pre-push 2>/dev/null)"
+     case "$guard" in /*) ;; *) guard="$HERE/$guard" ;; esac ;;
   *)  guard="$HERE/$hp/pre-push" ;;
 esac
 # PROBE it, don't just stat it. Testing `-x` certifies any executable — including a
