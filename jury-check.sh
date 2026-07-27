@@ -60,7 +60,11 @@ panel="$(OPENROUTER_API_KEY=x bash "$HERE/jury.sh" --commit HEAD 2>&1 | grep -oE
 [ -n "$panel" ] && say "✓" "panel: $panel" || say "✗" "panel did not resolve (jury.sh broken?)"
 
 # 2. OpenRouter key reachable (env, or the note tells you where yours lives)
-[ -n "${OPENROUTER_API_KEY:-}" ] && say "✓" "OPENROUTER_API_KEY present in env" || say "○" "OPENROUTER_API_KEY not in this shell (set it, or your /jury command fetches it)"
+# Every runner self-provisions via ork, so "not in this shell" is NOT a problem —
+# reporting it as one made the check exit 1 while the jury was fully operational.
+if [ -n "${OPENROUTER_API_KEY:-}" ]; then say "✓" "OPENROUTER_API_KEY present in env"
+elif [ -n "$(/root/.local/bin/ork 2>/dev/null)" ]; then say "✓" "key self-provisions via ork (not in env, but every runner resolves it)"
+else say "✗" "no OPENROUTER_API_KEY in env and ork could not supply one — /jury will fail"; fi
 
 # 3. slash command / skill installed
 insts=""; [ -f "$HOME/.claude/commands/jury.md" ] && insts+="/jury "; [ -d "$HOME/.claude/skills/ai-review-jury" ] && insts+="skill "
@@ -70,12 +74,16 @@ insts=""; [ -f "$HOME/.claude/commands/jury.md" ] && insts+="/jury "; [ -d "$HOM
 if git -C "$HERE" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git -C "$HERE" fetch -q origin 2>/dev/null || true
   at="$(git -C "$HERE" rev-parse --short HEAD)"
-  case "$(sync_state "$HERE")" in
-    sync)        say "✓" "repo LIVE + in sync @ $at" ;;
-    "diverged "*) set -- $(sync_state "$HERE"); say "✗" "repo DIVERGED @ $at — $2 ahead, $3 behind (rebase)" ;;
-    "behind "*)  set -- $(sync_state "$HERE"); say "✗" "repo BEHIND origin @ $at — $2 behind (git pull)" ;;
-    "ahead "*)   set -- $(sync_state "$HERE"); say "○" "repo AHEAD @ $at — $2 unpushed; review WHAT is in them before pushing (this remote is public)" ;;
-    *)           say "○" "no upstream branch — can't compare" ;;
+  # ONE invocation — calling sync_state again inside each branch made the reported
+  # state re-entrant: a second call that failed would downgrade a real DIVERGED to
+  # "can't compare" (jury P1, 2026-07-27).
+  set -- $(sync_state "$HERE")
+  case "${1:-}" in
+    sync)     say "✓" "repo LIVE + in sync @ $at" ;;
+    diverged) say "✗" "repo DIVERGED @ $at — $2 ahead, $3 behind (rebase)" ;;
+    behind)   say "✗" "repo BEHIND origin @ $at — $2 behind (git pull)" ;;
+    ahead)    say "○" "repo AHEAD @ $at — $2 unpushed; review WHAT is in them before pushing (this remote is public)" ;;
+    *)        say "○" "no upstream branch — can't compare" ;;
   esac
 else
   say "○" "not a git checkout (can't verify live)"

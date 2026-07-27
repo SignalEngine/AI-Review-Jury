@@ -15,12 +15,23 @@ bad=0
 
 while read -r _lref lsha _rref rsha; do
   [ "$lsha" = "$Z" ] && continue                      # branch deletion — nothing to inspect
+  # FAIL CLOSED. Discarding rev-list's exit status made this guard fail OPEN: an
+  # advertised remote SHA that is not present locally (shallow / partial fetch)
+  # makes rev-list exit 128, the commit list comes back empty, the loop never
+  # runs, and a push carrying private notes is ALLOWED. Caught by review-gate
+  # 2026-07-27 by executing it, not by reading it. An unknown range is not an
+  # empty range — if we cannot enumerate what is being pushed, we refuse.
   if [ "$rsha" = "$Z" ]; then
-    # new branch on the remote: everything not already published
-    mapfile -t commits < <(git rev-list "$lsha" --not --remotes=origin 2>/dev/null)
+    raw="$(git rev-list "$lsha" --not --remotes=origin 2>&1)" || raw="!"
   else
-    mapfile -t commits < <(git rev-list "$rsha..$lsha" 2>/dev/null)
+    raw="$(git rev-list "$rsha..$lsha" 2>&1)" || raw="!"
   fi
+  if [ "$raw" = "!" ]; then
+    printf '✗ pre-push BLOCKED — cannot enumerate the push range (%s..%s).\n' "${rsha:0:7}" "${lsha:0:7}" >&2
+    printf '      Refusing rather than assuming it is empty. Try: git fetch origin\n' >&2
+    bad=1; continue
+  fi
+  mapfile -t commits <<< "$raw"
   for c in "${commits[@]}"; do
     [ -n "$c" ] || continue
     hits="$(git ls-tree -r --name-only "$c" 2>/dev/null | grep -E "$PRIVATE" || true)"
@@ -38,7 +49,9 @@ if [ "$bad" != 0 ]; then
   This remote is PUBLIC. Untracking the file at HEAD is not enough — the blob is
   still in the commits being pushed. Drop it from the range first, e.g.:
 
-    git filter-branch --index-filter 'git rm --cached --ignore-unmatch <file>' origin/main..HEAD
+    git filter-branch --index-filter 'git rm --cached --ignore-unmatch <file>' <upstream>..HEAD
+
+  where <upstream> is what you are pushing against (git rev-parse --abbrev-ref @{u}).
 
   Then push again. To bypass deliberately: git push --no-verify (think first).
 MSG
