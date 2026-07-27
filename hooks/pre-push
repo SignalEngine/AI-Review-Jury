@@ -20,7 +20,10 @@ set -uo pipefail
 # scan widens rather than narrows — the safe direction.
 REMOTE="${1:-origin}"
 
-PRIVATE='^(idea-ledger\.md|.*\.private\.md)$'
+# Match the BASENAME at ANY depth, because .gitignore does: a bare pattern with no
+# slash is ignored at every level, so notes/idea-ledger.md is private to git but was
+# publishable by this guard — the exact inverse of the round-1 claim I refuted.
+PRIVATE='(^|/)(idea-ledger\.md|[^/]*\.private\.md)$'
 Z=0000000000000000000000000000000000000000
 bad=0
 

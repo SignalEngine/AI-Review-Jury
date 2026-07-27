@@ -120,5 +120,5 @@ echo "$MAP"
 LEDGER="$HERE/idea-ledger.md"
 { echo; echo "## $(head -1 <<<"$CONTENT" | sed 's/^#* *//' | cut -c1-80) — logged"
   echo "_models: adv=$M_ADV skep=$M_SKEP res=$M_RES synth=${M_SYNTH}_"
-  echo "$MAP"; echo "---"; } >> "$LEDGER"
+  echo "$MAP"; echo "---"; } >> "$LEDGER" || { echo "✗ ledger append FAILED — not reporting success" >&2; exit 1; }
 echo; echo "◆ appended to $LEDGER (add your pick + why later → feeds preference learning)" >&2

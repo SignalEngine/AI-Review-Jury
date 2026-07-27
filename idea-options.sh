@@ -173,5 +173,5 @@ echo "$OUT"
 LEDGER="$HERE/idea-ledger.md"
 { echo; echo "## OPTIONS — $(head -1 <<<"$CONTENT" | sed 's/^#* *//' | cut -c1-80)"
   echo "_proposers: ${PROPOSERS[*]} · judge=$M_JUDGE · synth=${M_SYNTH}_"
-  echo "$SCORES"; echo; echo "$OUT"; echo "---"; } >> "$LEDGER"
+  echo "$SCORES"; echo; echo "$OUT"; echo "---"; } >> "$LEDGER" || { echo "✗ ledger append FAILED — not reporting success" >&2; exit 1; }
 echo; echo "◆ appended to $LEDGER — log your pick with: idea-decide \"<ref>\" \"<choice + why>\"" >&2
