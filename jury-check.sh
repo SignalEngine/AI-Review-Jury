@@ -89,7 +89,16 @@ else
   say "○" "not a git checkout (can't verify live)"
 fi
 
-# 5. panel freshness (jury-tune stamps this)
+# 5. the private-file push guard is ACTIVE, not merely present in the tree.
+# Git never auto-runs hooks from a clone (deliberate, and no repo content can change
+# it), so an uninstalled guard is the default state. Report it every session rather
+# than assuming it — a guard nobody installed is not a guard. (review-gate P1, 07-27)
+hp="$(git -C "$HERE" config core.hooksPath 2>/dev/null)"
+guard="$HERE/${hp:-.git/hooks}/pre-push"
+if [ -x "$guard" ]; then say "✓" "private-file push guard active (${hp:-.git/hooks}/pre-push)"
+else say "✗" "push guard NOT installed — private files can reach this PUBLIC remote. Fix: git -C $HERE config core.hooksPath hooks"; fi
+
+# 6. panel freshness (jury-tune stamps this)
 if [ -f "$HERE/.jury-last-tuned" ]; then
   d=$(( ( $(date +%s) - $(cat "$HERE/.jury-last-tuned" 2>/dev/null || echo 0) ) / 86400 ))
   [ "$d" -lt 7 ] && say "✓" "panel tuned ${d}d ago (fresh)" || say "○" "panel ${d}d old — run jury-tune to re-benchmark"

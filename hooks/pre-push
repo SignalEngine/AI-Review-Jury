@@ -6,6 +6,10 @@
 # unpushed commits still carried the blob — one `git push` would have published it.
 # So this checks every commit in the push RANGE, not just the tip.
 #
+# INSTALL (git never auto-runs hooks from a clone — this is a git security property,
+# not an oversight here):  git config core.hooksPath hooks
+# jury-check.sh reports every session whether this guard is actually active.
+#
 # ponytail: one explicit list, no config file. Add names to PRIVATE as they appear.
 set -uo pipefail
 
