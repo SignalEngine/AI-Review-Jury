@@ -45,7 +45,13 @@ while read -r _lref lsha _rref rsha; do
   mapfile -t commits <<< "$raw"
   for c in "${commits[@]}"; do
     [ -n "$c" ] || continue
-    if ! tree="$(git ls-tree -r --name-only "$c" 2>/dev/null)"; then
+    # -z: git C-QUOTES non-ASCII/special names by default ("\345\256\242...\.md"),
+    # which the regex misses — a real leak path for e.g. 客户.private.md.
+    # NUL-delimited output is raw. (review-gate P1, 07-27)
+    # tr INSIDE the pipeline: bash command substitution silently strips NUL bytes,
+    # so capturing -z output directly concatenates every path into one line and the
+    # anchored regex stops matching. pipefail carries an ls-tree failure out.
+    if ! tree="$(git ls-tree -r -z --name-only "$c" 2>/dev/null | tr '\0' '\n')"; then
       printf '✗ pre-push BLOCKED — cannot read the tree of %s; refusing to assume it is clean\n' "${c:0:7}" >&2
       bad=1; continue
     fi

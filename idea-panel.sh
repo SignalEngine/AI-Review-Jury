@@ -49,7 +49,9 @@ try: d=json.loads(raw)
 except Exception: print("(non-JSON response)"); sys.exit(1)
 if isinstance(d,dict) and d.get("error"): print("(model error:",d["error"],")"); sys.exit(1)
 try:
-  m=d["choices"][0]["message"]; print(m.get("content") or m.get("reasoning") or "(empty)")
+  m=d["choices"][0]["message"]; body=m.get("content") or m.get("reasoning")
+  if not body: print("(empty response)"); sys.exit(1)
+  print(body)
 except Exception: print("(bad shape:",raw[:200],")"); sys.exit(1)'
 }
 
@@ -95,7 +97,10 @@ if compgen -G "$TMP/*.fail" >/dev/null 2>&1; then
 fi
 
 # ── 2. DIVERGENCE MAP ────────────────────────────────────────────────────────
-BUNDLE="ADVOCATE said:\n$(cat "$TMP/adv")\n\nSKEPTIC said:\n$(cat "$TMP/skep")\n\nRESEARCHER said:\n$(cat "$TMP/res")"
+# %s not %b: model output is untrusted and %b would interpret its backslash
+# escapes — a returned "\\c" truncates the bundle silently. (review-gate P2, 07-27)
+BUNDLE="$(printf 'ADVOCATE said:\n%s\n\nSKEPTIC said:\n%s\n\nRESEARCHER said:\n%s\n' \
+  "$(cat "$TMP/adv")" "$(cat "$TMP/skep")" "$(cat "$TMP/res")")"
 P_SYNTH="Below are three perspectives (advocate/skeptic/researcher) on the same idea. Produce a DIVERGENCE MAP, nothing else:
 1. CONSENSUS — points all three implicitly agree on (the safe ground).
 2. DISAGREEMENTS — where they genuinely conflict. For EACH, state the CRUX: the single question whose answer decides who is right.
@@ -105,7 +110,7 @@ Be terse and concrete. Do not re-argue the idea; map the structure of the disagr
 The user has made these PRIOR DECISIONS on related ideas (their taste signal) — weight the map toward what they have valued, and FLAG if this idea repeats or contradicts a past decision:
 $PRIOR_DECISIONS}"
 echo; echo "═══ 2 · DIVERGENCE MAP ($M_SYNTH) ═══"
-MAP=$(call "$M_SYNTH" "$(printf '%b' "$BUNDLE")
+MAP=$(call "$M_SYNTH" "$BUNDLE
 
 $P_SYNTH") || {
   echo "✗ synthesis failed — NOT appending to the ledger" >&2; exit 1; }

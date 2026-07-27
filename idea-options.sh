@@ -56,7 +56,9 @@ try: d=json.loads(raw)
 except Exception: print("(non-JSON response)"); sys.exit(1)
 if isinstance(d,dict) and d.get("error"): print("(model error:",d["error"],")"); sys.exit(1)
 try:
-  m=d["choices"][0]["message"]; print(m.get("content") or m.get("reasoning") or "(empty)")
+  m=d["choices"][0]["message"]; body=m.get("content") or m.get("reasoning")
+  if not body: print("(empty response)"); sys.exit(1)
+  print(body)
 except Exception: print("(bad shape:",raw[:200],")"); sys.exit(1)'
 }
 
@@ -102,7 +104,8 @@ PRIOR_DECISIONS="$(grep -A2 '^### DECISION' "$HERE/idea-ledger.md" 2>/dev/null |
 [ -n "$PRIOR_DECISIONS" ] && { echo; echo "  prior decisions on record (feeding synthesis):"; echo "$PRIOR_DECISIONS" | sed 's/^/    /'; }
 
 # ── 1. BLIND PROPOSERS (parallel) ────────────────────────────────────────────
-TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
+TMP=$(mktemp -d) || TMP=""
+{ [ -n "$TMP" ] && [ -d "$TMP" ]; } || { echo "✗ mktemp -d failed — refusing to run" >&2; exit 2; }; trap 'rm -rf "$TMP"' EXIT
 i=0
 for m in "${PROPOSERS[@]}"; do
   i=$((i+1))
