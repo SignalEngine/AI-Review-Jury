@@ -41,7 +41,12 @@ MAX=${MAX_CHARS:-40000}; CONTENT="${CONTENT:0:$MAX}"
 # minimax x2, deepseek, google. luna is the cheapest codex-family model on
 # OpenRouter ($0.50/$3.00) and does NOT touch the ChatGPT subscription, so it
 # still works when codex itself is rate-limited. (James, 2026-07-29)
-IFS=, read -r -a PROPOSERS <<< "${MODELS_PROPOSERS:-deepseek/deepseek-v4-flash,google/gemini-3.5-flash-lite,minimax/minimax-m3,openai/gpt-5.6-luna}"
+# Five lineages. GLM is back as a PROPOSER (not judge — judging its own work was the
+# defect James spotted). It was removed from every default on cost grounds when the
+# OpenRouter balance was falling; measured, a proposer seat costs $0.0029/run and
+# takes the whole run 1.25c -> 1.6c. That is not a cost decision, so it comes back
+# where James saw it work. (2026-07-29)
+IFS=, read -r -a PROPOSERS <<< "${MODELS_PROPOSERS:-deepseek/deepseek-v4-flash,google/gemini-3.5-flash-lite,minimax/minimax-m3,openai/gpt-5.6-luna,z-ai/glm-5.2}"
 # m3 for judge + synthesis — neither was benchmarked, both take long inputs.
 # The judge must NOT be a proposer. It was minimax-m3, which is also proposer #3 —
 # so it scored its own proposal, the textbook self-preference case and the exact
