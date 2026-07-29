@@ -37,8 +37,9 @@ MAX=${MAX_CHARS:-40000}; CONTENT="${CONTENT:0:$MAX}"
 # Proposers sit in cheap/diverse seats (their job is RANGE, not judgement);
 # the proven judge model holds the scoring seat, same split as idea-panel.
 IFS=, read -r -a PROPOSERS <<< "${MODELS_PROPOSERS:-deepseek/deepseek-v4-flash,google/gemini-3.5-flash-lite,minimax/minimax-m3}"
-M_JUDGE="${MODELS_JUDGE:-z-ai/glm-5.2}"
-M_SYNTH="${MODELS_SYNTH:-z-ai/glm-5.2}"
+# m3 for judge + synthesis — neither was benchmarked, both take long inputs.
+M_JUDGE="${MODELS_JUDGE:-minimax/minimax-m3}"
+M_SYNTH="${MODELS_SYNTH:-minimax/minimax-m3}"
 
 call() { # model, prompt  ->  text   (verbatim from idea-panel.sh — same wire shape)
   local model="$1" prompt="$2" req
