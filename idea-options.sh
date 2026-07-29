@@ -140,13 +140,25 @@ P_JUDGE="Below are independently-proposed approaches to the same problem.
 
 First, MERGE duplicates: if two proposers describe the same approach, treat them as one option and say so. Genuinely distinct approaches stay separate.
 
-Then score EVERY surviving option 1-5 on each axis, with a one-line reason per score:
+Then score EVERY surviving option 1-5 on each axis, with a one-line reason per score.
+
+WORTH — is this a good idea at all?
+- AUDIENCE VALUE — would the person this is FOR actually want it, and change their behaviour because of it? Not 'is it clever' — would they notice if it vanished?
+- DISTINCTIVENESS — is this the obvious thing anyone would build, or does it do something the obvious version does not? A 1 is not fatal; it means the value must come from execution, and you must say so.
+- PRIOR ART — does this already exist? Name it if so, then judge WHICH KIND of existing:
+    5 = exists and is PROVEN — adopt or copy it rather than reinvent
+    3 = exists but unproven, or proven only in a different context
+    1 = has been tried and demonstrably failed — say who and why
+
+FEASIBILITY — can we actually do it?
 - FIT — does it solve the stated problem, or a nearby easier one?
 - COST — build + ongoing (5 = cheap)
 - REVERSIBILITY — how easily undone (5 = trivial to undo)
 - CONFIDENCE — how much do we already know this works, vs needing evidence?
 
-Then rank them by total, and state in one line WHAT WOULD HAVE TO BE TRUE for the bottom-ranked option to beat the top one. Be terse. Do not invent new options."
+Rank by total, but report the WORTH and FEASIBILITY subtotals SEPARATELY. A high total built only on cheap-and-reversible is a safe idea nobody wants, and the ranking must make that visible instead of hiding it in one number. If the top option wins on FEASIBILITY while a lower one leads on WORTH, say so explicitly.
+
+Then state in one line WHAT WOULD HAVE TO BE TRUE for the bottom-ranked option to beat the top one. Be terse. Do not invent new options."
 
 # Keep the raw proposals. Without them a past decision cannot be re-examined — the
 # ledger stores only the judge's OUTPUT, so "was the judge stable?" was unanswerable
