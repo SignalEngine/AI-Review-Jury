@@ -33,11 +33,11 @@ PROMPT="You are reviewing commit $SHA in this git repo for CORRECTNESS bugs and 
 cd "$WT" && CLAUDE_AUTOCAPTURE=1 ANTHROPIC_BASE_URL="https://openrouter.ai/api" \
   ANTHROPIC_API_KEY="$KEY" \
   ANTHROPIC_AUTH_TOKEN="$KEY" \
-  ANTHROPIC_MODEL="z-ai/glm-5.2" \
-  ANTHROPIC_SMALL_FAST_MODEL="z-ai/glm-5.2" \
+  ANTHROPIC_MODEL="minimax/minimax-m3" \
+  ANTHROPIC_SMALL_FAST_MODEL="minimax/minimax-m3" \
   CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
   timeout 900 claude -p "$PROMPT" \
-    --model "z-ai/glm-5.2" \
+    --model "minimax/minimax-m3" \
     --allowedTools "Read,Grep,Glob,Bash(git show:*),Bash(git log:*),Bash(git diff:*),Bash(cat:*),Bash(ls:*)" \
     --disallowedTools "Edit,Write,NotebookEdit,Task,Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(rm:*),Bash(mv:*),Bash(npm install:*),Bash(npx convex:*)" \
     --max-turns 40 \

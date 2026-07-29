@@ -24,7 +24,7 @@ set -euo pipefail
 # --help must work without a key or a repo.
 case "${1:-}" in -h|--help) grep '^#' "$0" | grep -v '^#!' | sed 's/^# \{0,1\}//'; exit 0;; esac
 
-MODEL="${MODEL:-z-ai/glm-5.2}"
+MODEL="${MODEL:-minimax/minimax-m3}"
 export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-$(/root/.local/bin/ork 2>/dev/null)}"
 KEY="${OPENROUTER_API_KEY:-}"
 MAX="${MAX_DIFF_CHARS:-120000}"
@@ -95,9 +95,19 @@ except Exception:
   print("✗ unexpected response shape; first 300 chars:"); print(raw[:300]); sys.exit(1)
 print(txt if txt else "(empty response)")'
 }
+# Backoff by error type — an instant retry on a 429 just hits the same limit.
 OUT="$(run_review)"
-if printf '%s' "$OUT" | grep -q '^✗\|^(empty response)$'; then
-  echo "◆ retrying $MODEL (bad response)" >&2
+tries=0
+while printf '%s' "$OUT" | grep -q '^✗\|^(empty response)$'; do
+  tries=$((tries + 1))
+  [ "$tries" -ge 3 ] && break
+  if printf '%s' "$OUT" | grep -qiE '429|rate.?limit|too many requests|quota'; then
+    wait=$((tries * 15))
+  else
+    wait=2
+  fi
+  echo "◆ retrying $MODEL in ${wait}s (attempt $((tries + 1))/3)" >&2
+  sleep "$wait"
   OUT="$(run_review)"
-fi
+done
 printf '%s\n' "$OUT"

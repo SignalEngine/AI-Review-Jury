@@ -54,7 +54,7 @@ if [ -f "$HERE/.panel-last-tuned" ]; then
 fi
 
 # Panel selection: MODELS env > panels.conf per-preset line > code-review default.
-PANEL_DEFAULT="z-ai/glm-5.2,minimax/minimax-m3"
+PANEL_DEFAULT="minimax/minimax-m3,google/gemini-3.5-flash-lite"
 CONF=""
 [ -f "$HERE/panels.conf" ] && CONF="$(grep -E "^${PRESET}=" "$HERE/panels.conf" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')"
 MODELS="${MODELS:-${CONF:-$PANEL_DEFAULT}}"
@@ -91,13 +91,21 @@ print(txt if txt else "(empty response)")'
 
 # OpenRouter drops ~4% of calls (truncated/non-JSON); one retry recovered 7/7 failures
 # in the 2026-07-05 benchmark, so retry once before reporting an error.
+# Backoff by ERROR TYPE. The old version retried instantly, which sent a
+# rate-limited call straight back into the same limit (15 such events in 24h of
+# transcripts, 2026-07-28). A truncated response needs another go; a 429 needs time.
+backoff_for() { grep -qiE '429|rate.?limit|too many requests|quota' "$1" && echo $(( $2 * 15 )) || echo 2; }
 run_with_retry() {
-  local m="$1" out="$2" prompt_override="${3:-$PROMPT}"
-  run_one "$m" "$prompt_override" > "$out" 2>&1 || true
-  if [ ! -s "$out" ] || grep -q '^✗' "$out"; then
-    echo "◆ retrying $m (bad response)" >&2
+  local m="$1" out="$2" prompt_override="${3:-$PROMPT}" tries=0 wait
+  while :; do
     run_one "$m" "$prompt_override" > "$out" 2>&1 || true
-  fi
+    { [ -s "$out" ] && ! grep -q '^✗' "$out"; } && return 0
+    tries=$((tries + 1))
+    [ "$tries" -ge 3 ] && return 0        # give up, caller reports the ✗
+    wait=$(backoff_for "$out" "$tries")
+    echo "◆ retrying $m in ${wait}s (attempt $((tries + 1))/3)" >&2
+    sleep "$wait"
+  done
 }
 
 IFS=',' read -ra LIST <<< "$MODELS"
