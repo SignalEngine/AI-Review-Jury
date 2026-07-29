@@ -10,3 +10,4 @@ panel.conf
 *.tmp
 .DS_Store
 panel-bench/out/
+idea-runs/

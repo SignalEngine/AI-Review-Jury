@@ -55,7 +55,7 @@ call() { # model, prompt  ->  text   (verbatim from idea-panel.sh — same wire 
   local model="$1" prompt="$2" req
   req=$(python3 -c '
 import json,sys
-print(json.dumps({"model":sys.argv[3],"temperature":0,
+print(json.dumps({"model":sys.argv[3],"temperature":float(__import__("os").environ.get("IO_TEMP","0")),
   "messages":[{"role":"user","content":sys.argv[1]+"\n\n--- PROBLEM ---\n"+sys.argv[2]}]}))' \
     "$prompt" "$CONTENT" "$model")
   curl -s -m "${PANEL_TIMEOUT:-240}" https://openrouter.ai/api/v1/chat/completions \
@@ -147,6 +147,16 @@ Then score EVERY surviving option 1-5 on each axis, with a one-line reason per s
 - CONFIDENCE — how much do we already know this works, vs needing evidence?
 
 Then rank them by total, and state in one line WHAT WOULD HAVE TO BE TRUE for the bottom-ranked option to beat the top one. Be terse. Do not invent new options."
+
+# Keep the raw proposals. Without them a past decision cannot be re-examined — the
+# ledger stores only the judge's OUTPUT, so "was the judge stable?" was unanswerable
+# on three real runs. Cheap to keep, impossible to reconstruct later.
+RUNDIR="$HERE/idea-runs/$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$RUNDIR"
+cp "$TMP"/opt* "$RUNDIR"/ 2>/dev/null || true
+printf '%s\n' "$CONTENT" > "$RUNDIR/problem.md"
+printf 'proposers: %s\njudge: %s\nsynth: %s\n' "${PROPOSERS[*]}" "$M_JUDGE" "$M_SYNTH" > "$RUNDIR/models.txt"
+echo "◆ proposals kept → $RUNDIR" >&2
 
 echo; echo "═══ 2 · SCORED ($M_JUDGE) ═══"
 if compgen -G "$TMP/*.fail" >/dev/null 2>&1; then
