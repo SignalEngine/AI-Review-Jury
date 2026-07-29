@@ -28,7 +28,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 # Self-updating panel: `jury-tune` benchmarks new OpenRouter models and writes the
 # winners to panel.conf (one line of comma-separated slugs). Falls back to the
 # benchmarked default. Env MODELS overrides everything.
-PANEL_DEFAULT="minimax/minimax-m3,google/gemini-3.5-flash-lite"
+PANEL_DEFAULT="z-ai/glm-5.2,minimax/minimax-m3"
 PANEL_FILE=""
 [ -f "$HERE/panel.conf" ] && PANEL_FILE="$(grep -vE '^[[:space:]]*(#|$)' "$HERE/panel.conf" | head -1 | tr -d '[:space:]')"
 MODELS="${MODELS:-${PANEL_FILE:-$PANEL_DEFAULT}}"

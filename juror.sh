@@ -24,7 +24,7 @@ set -euo pipefail
 # --help must work without a key or a repo.
 case "${1:-}" in -h|--help) grep '^#' "$0" | grep -v '^#!' | sed 's/^# \{0,1\}//'; exit 0;; esac
 
-MODEL="${MODEL:-minimax/minimax-m3}"
+MODEL="${MODEL:-z-ai/glm-5.2}"
 export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-$(/root/.local/bin/ork 2>/dev/null)}"
 KEY="${OPENROUTER_API_KEY:-}"
 MAX="${MAX_DIFF_CHARS:-120000}"

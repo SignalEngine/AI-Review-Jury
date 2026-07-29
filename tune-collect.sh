@@ -20,7 +20,7 @@ export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-$(/root/.local/bin/ork 2>/dev/n
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "✗ run inside the repo to benchmark against" >&2; exit 1; }
 mkdir -p "$OUT/reviews"
 
-PANEL_DEFAULT="minimax/minimax-m3,google/gemini-3.5-flash-lite"
+PANEL_DEFAULT="z-ai/glm-5.2,minimax/minimax-m3"
 [ -f "$HERE/panel.conf" ] && PANEL_DEFAULT="$(grep -vE '^[[:space:]]*(#|$)' "$HERE/panel.conf" | head -1 | tr -d '[:space:]')"
 INCUMBENTS="${INCUMBENTS:-$PANEL_DEFAULT}"
 SINCE=0; [ -f "$HERE/.jury-last-tuned" ] && SINCE="$(cat "$HERE/.jury-last-tuned" 2>/dev/null || echo 0)"
