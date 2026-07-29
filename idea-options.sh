@@ -36,7 +36,12 @@ MAX=${MAX_CHARS:-40000}; CONTENT="${CONTENT:0:$MAX}"
 
 # Proposers sit in cheap/diverse seats (their job is RANGE, not judgement);
 # the proven judge model holds the scoring seat, same split as idea-panel.
-IFS=, read -r -a PROPOSERS <<< "${MODELS_PROPOSERS:-deepseek/deepseek-v4-flash,google/gemini-3.5-flash-lite,minimax/minimax-m3}"
+# Four lineages, four blind proposers. gpt-5.6-luna is the OpenAI seat: this system
+# had NO OpenAI and no Anthropic voice, so "diverse lineage" was overstated —
+# minimax x2, deepseek, google. luna is the cheapest codex-family model on
+# OpenRouter ($0.50/$3.00) and does NOT touch the ChatGPT subscription, so it
+# still works when codex itself is rate-limited. (James, 2026-07-29)
+IFS=, read -r -a PROPOSERS <<< "${MODELS_PROPOSERS:-deepseek/deepseek-v4-flash,google/gemini-3.5-flash-lite,minimax/minimax-m3,openai/gpt-5.6-luna}"
 # m3 for judge + synthesis — neither was benchmarked, both take long inputs.
 M_JUDGE="${MODELS_JUDGE:-minimax/minimax-m3}"
 M_SYNTH="${MODELS_SYNTH:-minimax/minimax-m3}"
