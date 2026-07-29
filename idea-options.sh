@@ -43,7 +43,12 @@ MAX=${MAX_CHARS:-40000}; CONTENT="${CONTENT:0:$MAX}"
 # still works when codex itself is rate-limited. (James, 2026-07-29)
 IFS=, read -r -a PROPOSERS <<< "${MODELS_PROPOSERS:-deepseek/deepseek-v4-flash,google/gemini-3.5-flash-lite,minimax/minimax-m3,openai/gpt-5.6-luna}"
 # m3 for judge + synthesis — neither was benchmarked, both take long inputs.
-M_JUDGE="${MODELS_JUDGE:-minimax/minimax-m3}"
+# The judge must NOT be a proposer. It was minimax-m3, which is also proposer #3 —
+# so it scored its own proposal, the textbook self-preference case and the exact
+# thing anonymised voting is meant to prevent. mimo-v2.5-pro is a fifth lineage,
+# sits in no proposer seat, and at $0.43/$0.87 is CHEAPER than m3 on output for a
+# role that reads every proposal at once. (James spotted this, 2026-07-29)
+M_JUDGE="${MODELS_JUDGE:-xiaomi/mimo-v2.5-pro}"
 M_SYNTH="${MODELS_SYNTH:-minimax/minimax-m3}"
 
 call() { # model, prompt  ->  text   (verbatim from idea-panel.sh — same wire shape)
