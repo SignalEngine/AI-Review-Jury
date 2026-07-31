@@ -59,8 +59,22 @@ for m in "${LIST[@]}"; do
   echo "════════════════════════════════════════════════════════════════"
   echo "  $m"
   echo "════════════════════════════════════════════════════════════════"
-  cat "$TMP/$safe.txt" 2>/dev/null || echo "(no output)"
+  # An empty juror is a FAILED juror, not a clean one. Surface its stderr — a silent
+  # blank here reads as "no findings", which is how a crashing reviewer passed every
+  # oversized diff for weeks (juror.sh hit MAX_ARG_STRLEN; `|| true` ate the error).
+  if [ -s "$TMP/$safe.txt" ]; then
+    cat "$TMP/$safe.txt"
+  else
+    FAILED=1
+    echo "✗ NO OUTPUT — this juror FAILED. It did not review the diff and did not pass it."
+    echo "  stderr:"
+    sed 's/^/    /' "$TMP/$safe.err" 2>/dev/null | tail -20
+  fi
 done
 rm -rf "$TMP"
 echo
+if [ -n "${FAILED:-}" ]; then
+  echo "◆ Panel INCOMPLETE — at least one juror failed. Do not read this as a pass." >&2
+  exit 1
+fi
 echo "◆ Panel done. Triage each finding against the code — a claim is a lead, not a verdict." >&2
