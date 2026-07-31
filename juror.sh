@@ -115,7 +115,12 @@ except Exception:
 print(txt if txt else "(empty response)")'
 }
 # Backoff by error type — an instant retry on a 429 just hits the same limit.
-OUT="$(run_review)"
+# `|| true` is load-bearing: set -euo pipefail is on, run_review ends in a python
+# that exits 1 on a model error / non-JSON body, so a bare assignment ABORTED the
+# script here — printing nothing at all and skipping the retry loop below, which
+# exists for precisely those failures. A dead retry read as "the model had no
+# findings" once jury.sh cat'd the empty file.
+OUT="$(run_review)" || true
 tries=0
 while printf '%s' "$OUT" | grep -q '^✗\|^(empty response)$'; do
   tries=$((tries + 1))
@@ -127,6 +132,6 @@ while printf '%s' "$OUT" | grep -q '^✗\|^(empty response)$'; do
   fi
   echo "◆ retrying $MODEL in ${wait}s (attempt $((tries + 1))/3)" >&2
   sleep "$wait"
-  OUT="$(run_review)"
+  OUT="$(run_review)" || true
 done
 printf '%s\n' "$OUT"
