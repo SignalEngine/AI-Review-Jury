@@ -52,6 +52,22 @@ if [ -z "$MODE" ]; then
   fi
 fi
 
+# Freshness guard (2026-08-12: a stale origin/master months behind local sent both
+# jurors reviewing ancient commits). Refresh the base ref; if fetch fails AND the
+# local default branch is far ahead of the remote ref, the diff would be garbage.
+if [ "${MODE:-}" = "base" ]; then
+  git fetch origin --quiet 2>/dev/null || true
+  _local_def="${BASE#origin/}"
+  if git rev-parse --verify "$_local_def" >/dev/null 2>&1 && \
+     git rev-parse --verify "$BASE" >/dev/null 2>&1; then
+    _ahead=$(git rev-list --count "$BASE".."$_local_def" 2>/dev/null || echo 0)
+    if [ "${_ahead:-0}" -gt 50 ]; then
+      echo "◆ ⚠ $BASE is $_ahead commits behind local $_local_def (fetch failed or remote is dead) — reviewing vs local $_local_def instead." >&2
+      BASE="$_local_def"
+    fi
+  fi
+fi
+
 # Generated blobs burn the review budget without being reviewable. A lockfile or a
 # captured HTML fixture can be 10x the size of the code it ships with, and since git
 # orders the diff by path it can push every real file past the truncation point.
