@@ -87,7 +87,7 @@ SHAPE='Answer in EXACTLY this shape, once:
 ### OPTION: <short distinctive name>
 MECHANISM: <how it actually works, concretely — name the moving parts>
 WHY IT FITS: <why this solves the stated problem, not a nearby one>
-COST: <build effort + ongoing cost; be honest about the expensive part>
+COST: <build effort in AGENT-SESSIONS + ongoing cost; be honest about the expensive part. Calibration: one founder driving parallel AI coding sessions with an automated ship pipeline — a scoped feature ships in one session (~1-3h), a large multi-surface feature in 1-2 days. NEVER estimate in human-team weeks; anything longer than days must name a specific external wait (API approval, DNS, warmup), not coding time>
 BREAKS/RISKS: <what this makes worse, who it hurts, what could regress>
 REVERSIBILITY: <how hard to undo once shipped>
 EVIDENCE NEEDED: <the check that would confirm this is the right call>'

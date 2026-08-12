@@ -60,6 +60,9 @@ except Exception: print("(bad shape:",raw[:200],")"); sys.exit(1)'
 }
 
 FOCUS_LINE="${FOCUS:+ The user asks you to focus on: $FOCUS.}"
+# Time-estimate calibration (James 2026-08-12: a panel said "3 weeks to code" — never
+# true here). Appended to every seat so effort claims use the stack's real throughput.
+FOCUS_LINE=" Context for any effort/timeline claim: this is one founder driving parallel AI coding sessions with an automated ship pipeline — a scoped feature ships in one session (~1-3h), a large feature in 1-2 days; never estimate in human-team weeks, and anything longer than days must name a specific external wait, not coding time.$FOCUS_LINE"
 P_ADV="You are an ADVOCATE. You believe this idea can work. Give the STRONGEST version: the core mechanism, why it succeeds, the best realistic path to make it real, and the one thing that most makes it worth doing. Be concrete, not cheerleading.$FOCUS_LINE"
 P_SKEP="You are a SKEPTIC. You think this idea is likely flawed. Find the CONCRETE reasons it fails: unit-economics that don't add up (do the math), internal contradictions, hidden costs, false assumptions, why it won't work as imagined, simpler things that already solve it. No vague doubts — specific failure modes only.$FOCUS_LINE"
 P_RES="You are a RESEARCHER. Do NOT judge good/bad. Identify what is UNKNOWN: the load-bearing ASSUMPTIONS that need checking, the QUESTIONS whose answers would flip the verdict, and for each, HOW to find the answer (what to test, measure, or look up). Rank by how much the answer would change the decision.$FOCUS_LINE"
