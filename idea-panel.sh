@@ -29,13 +29,13 @@ MAX=${MAX_CHARS:-40000}; CONTENT="${CONTENT:0:$MAX}"
 # generative roles so each run measures their PLANNING signal; the proven
 # critic/synth models (minimax, glm) hold the judgement seats.
 M_ADV="${MODELS_ADVOCATE:-deepseek/deepseek-v4-flash}"
-M_SKEP="${MODELS_SKEPTIC:-minimax/minimax-m3}"
+M_SKEP="${MODELS_SKEPTIC:-z-ai/glm-5.3-flash}"
 M_RES="${MODELS_RESEARCHER:-google/gemini-3.5-flash-lite}"
 # m3, not GLM: this role was never benchmarked, and synthesis reads EVERY
 # perspective at once — the longest input in the pipeline — where GLM costs
 # $0.74/M in vs m3 $0.30/M. GLM keeps its benchmarked JURY seat; this seat was
 # only ever a default. MODELS_SYNTH= overrides. (cost review 2026-07-29)
-M_SYNTH="${MODELS_SYNTH:-minimax/minimax-m3}"
+M_SYNTH="${MODELS_SYNTH:-z-ai/glm-5.3-flash}"
 
 call() { # model, prompt  ->  text
   local model="$1" prompt="$2" req

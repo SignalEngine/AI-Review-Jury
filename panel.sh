@@ -54,7 +54,7 @@ if [ -f "$HERE/.panel-last-tuned" ]; then
 fi
 
 # Panel selection: MODELS env > panels.conf per-preset line > code-review default.
-PANEL_DEFAULT="z-ai/glm-5.2,minimax/minimax-m3"
+PANEL_DEFAULT="z-ai/glm-5.2,z-ai/glm-5.3-flash"
 CONF=""
 [ -f "$HERE/panels.conf" ] && CONF="$(grep -E "^${PRESET}=" "$HERE/panels.conf" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')"
 MODELS="${MODELS:-${CONF:-$PANEL_DEFAULT}}"
