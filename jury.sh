@@ -35,12 +35,39 @@ MODELS="${MODELS:-${PANEL_FILE:-$PANEL_DEFAULT}}"
 export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-$(/root/.local/bin/ork 2>/dev/null)}"
 [ -n "${OPENROUTER_API_KEY:-}" ] || { echo "✗ OPENROUTER_API_KEY not set" >&2; exit 1; }
 
+# Once-per-PR guard (James 2026-09-14: the OpenRouter balance hit $0 after 73 jury runs
+# in one morning — every fix round re-ran the full panel on a near-identical diff).
+# Same repo + branch + args juried within 6h on a diff within ~20% of this one → skip
+# with a non-zero exit, so a caller can never read the skip as a pass. Fix rounds go
+# to review-gate; the jury reviews the FINAL PR diff. Override: JURY_FORCE=1.
+_jstate=""; _jlines=0
+if [ "${JURY_FORCE:-0}" != 1 ]; then
+  _jtop=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+  _jbr=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo detached)
+  _jbase=$(git merge-base HEAD origin/master 2>/dev/null || git merge-base HEAD origin/main 2>/dev/null || true)
+  [ -n "$_jbase" ] && _jlines=$(git diff --numstat "$_jbase"...HEAD 2>/dev/null | awk '{s+=$1+$2} END{print s+0}')
+  _jstate="$HOME/.cache/jury-runs/$(printf '%s|%s|%s' "$_jtop" "$_jbr" "$*" | sha1sum | cut -c1-16)"
+  mkdir -p "$(dirname "$_jstate")"
+  if [ -f "$_jstate" ]; then
+    read -r _jts _jprev < "$_jstate" || true
+    _jage=$(( $(date +%s) - ${_jts:-0} ))
+    _jdelta=$(( _jlines > ${_jprev:-0} ? _jlines - ${_jprev:-0} : ${_jprev:-0} - _jlines ))
+    if [ "$_jage" -lt 21600 ] && [ "$_jdelta" -le $(( ${_jprev:-0} / 5 + 20 )) ]; then
+      echo "◆ JURY SKIPPED — NOT A REVIEW AND NOT A PASS. This branch was juried $(( _jage / 60 ))m ago on a near-identical diff (${_jprev:-0} → ${_jlines} changed lines). The jury runs once per PR on the final diff (OpenRouter cost); use review-gate for fix rounds. Re-run anyway: JURY_FORCE=1 $0 $*" >&2
+      exit 3
+    fi
+  fi
+fi
+
 # Staleness nudge: new models ship constantly and a leaderboard rank doesn't transfer,
 # so prompt a re-benchmark after a week of use. jury-tune stamps .jury-last-tuned.
 if [ -f "$HERE/.jury-last-tuned" ]; then
   _age=$(( ( $(date +%s) - $(cat "$HERE/.jury-last-tuned" 2>/dev/null || echo 0) ) / 86400 ))
   [ "$_age" -ge 7 ] && echo "◆ ⚠ Panel is ${_age}d old — new models may have shipped. Re-benchmark + self-update: run jury-tune (or /jury-tune)." >&2
 fi
+
+# Stamp before launching jurors so parallel duplicate invocations also dedupe.
+[ -n "$_jstate" ] && printf '%s %s\n' "$(date +%s)" "$_jlines" > "$_jstate"
 
 IFS=',' read -ra LIST <<< "$MODELS"
 echo "◆ AI Review Jury: ${#LIST[@]} models reviewing in parallel — ${MODELS}" >&2
