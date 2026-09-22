@@ -89,8 +89,15 @@ for m in "${LIST[@]}"; do
   # An empty juror is a FAILED juror, not a clean one. Surface its stderr — a silent
   # blank here reads as "no findings", which is how a crashing reviewer passed every
   # oversized diff for weeks (juror.sh hit MAX_ARG_STRLEN; `|| true` ate the error).
-  if [ -s "$TMP/$safe.txt" ]; then
+  # juror.sh prints its final "✗ model error" / "(empty response)" to stdout after the
+  # retries run out, so a non-empty file is not a review either (a no-credit run
+  # passed this way 2026-09-22).
+  if [ -s "$TMP/$safe.txt" ] && ! head -1 "$TMP/$safe.txt" | grep -q '^✗\|^(empty response)$'; then
     cat "$TMP/$safe.txt"
+  elif [ -s "$TMP/$safe.txt" ]; then
+    FAILED=1
+    echo "✗ JUROR ERROR — this juror FAILED. It did not review the diff and did not pass it."
+    sed 's/^/    /' "$TMP/$safe.txt" | head -20
   else
     FAILED=1
     echo "✗ NO OUTPUT — this juror FAILED. It did not review the diff and did not pass it."
