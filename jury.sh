@@ -59,6 +59,28 @@ if [ "${JURY_FORCE:-0}" != 1 ]; then
   fi
 fi
 
+# Risk gate (James 2026-10-29): a week of runs found ~4 small real bugs against 15+ refuted
+# findings, so the jury only runs on risky diffs; review-gate is the review for the rest.
+# Risky = security/auth/money/root/installer paths or content, or the factory box repo.
+# Override: JURY_ALWAYS=1 (or JURY_FORCE=1). Exit 0 + "JURY NOT NEEDED" = not a review.
+if [ "${JURY_ALWAYS:-0}" != 1 ] && [ "${JURY_FORCE:-0}" != 1 ]; then
+  case " $* " in
+    *" --commit "*) _jsha=$(printf '%s\n' "$@" | grep -A1 -x -- --commit | tail -1); _jd=$(git show "$_jsha" 2>/dev/null) ;;
+    *" --uncommitted "*) _jd=$(git diff HEAD 2>/dev/null) ;;
+    *) _jb=$(git merge-base HEAD origin/master 2>/dev/null || git merge-base HEAD origin/main 2>/dev/null || true)
+       _jd=$([ -n "$_jb" ] && git diff "$_jb"...HEAD 2>/dev/null || true) ;;
+  esac
+  _jrisk='auth|clerk|stripe|billing|payment|checkout|webhook|secret|credential|permission|sudo|chmod|chown|setuid|ssh|firewall|iptables|ufw|nftables|install|provision|security|guardrail|password|apikey|api_key|requireOrgAccess|tenant|encrypt|signature|oauth|token'
+  # Repo identity from the shared git dir + remote, not the worktree folder name (wt-tfb-* missed it, 10-31).
+  # No pipes into grep -q: under pipefail an early-exiting grep -q SIGPIPEs the writer and the risky diff read as safe (11-02).
+  _jrepo="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) $(git remote get-url origin 2>/dev/null || true)"
+  _jchg=$(grep -E '^(\+\+\+|---|\+|-)' <<<"$_jd" || true)
+  if [ -n "$_jd" ] && ! grep -qiE 'factory|taylor-ai' <<<"$_jrepo" && ! grep -qiE "$_jrisk" <<<"$_jchg"; then
+    echo "◆ JURY NOT NEEDED — low-risk diff (no auth/money/security/root/installer change). This is NOT a review: review-gate is the review here. Run anyway: JURY_ALWAYS=1 $0 $*" >&2
+    exit 0
+  fi
+fi
+
 # Staleness nudge: new models ship constantly and a leaderboard rank doesn't transfer,
 # so prompt a re-benchmark after a week of use. jury-tune stamps .jury-last-tuned.
 if [ -f "$HERE/.jury-last-tuned" ]; then
@@ -68,14 +90,28 @@ fi
 
 # Stamp before launching jurors so parallel duplicate invocations also dedupe.
 [ -n "$_jstate" ] && printf '%s %s\n' "$(date +%s)" "$_jlines" > "$_jstate"
+# ...but only a finished, complete panel keeps the stamp: a run killed by a timeout before any verdict
+# was recorded as juried and the rerun skipped with exit 3 (10-31).
+_jok=0
+trap '[ "$_jok" = 1 ] || { [ -n "$_jstate" ] && rm -f "$_jstate"; }' EXIT
+trap 'exit 143' TERM INT
 
 IFS=',' read -ra LIST <<< "$MODELS"
 echo "◆ AI Review Jury: ${#LIST[@]} models reviewing in parallel — ${MODELS}" >&2
 TMP=$(mktemp -d)
+# Live view (James 2026-10-26: wants to watch the panel, not have it run unseen).
+# Everything from here on is mirrored to a log that a herdr pane follows. LOG_PANE=0 opts out.
+if [ "${HERDR_ENV:-}" = 1 ] && [ "${LOG_PANE:-1}" != 0 ]; then
+  JLOG="/root/.local/state/jury-logs/$(date +%Y%m%d-%H%M%S)-$$.log"; mkdir -p "${JLOG%/*}"
+  exec > >(tee -a "$JLOG") 2> >(tee -a "$JLOG" >&2)
+  bash /root/.claude/scripts/log-pane.sh "jury" "$JLOG" $$
+  echo "◆ $(date +%H:%M:%S) jurors started: ${MODELS}" >&2
+fi
 pids=()
 for m in "${LIST[@]}"; do
   safe="${m//\//_}"
-  ( MODEL="$m" bash "$HERE/juror.sh" "$@" > "$TMP/$safe.txt" 2>"$TMP/$safe.err" || true ) &
+  ( MODEL="$m" bash "$HERE/juror.sh" "$@" > "$TMP/$safe.txt" 2>"$TMP/$safe.err" || true
+    echo "◆ $(date +%H:%M:%S) $m finished" >&2 ) &
   pids+=($!)
 done
 for p in "${pids[@]}"; do wait "$p"; done
@@ -92,6 +128,8 @@ for m in "${LIST[@]}"; do
   # juror.sh prints its final "✗ model error" / "(empty response)" to stdout after the
   # retries run out, so a non-empty file is not a review either (a no-credit run
   # passed this way 2026-09-22).
+  # juror.sh's truncation WARNING went to its .err file, which nobody showed (10-28: a 47% review read as clean).
+  if _jw=$(grep -m1 'WARNING: diff is' "$TMP/$safe.err" 2>/dev/null); then PARTIAL="$_jw"; echo "⚠ PARTIAL REVIEW — ${_jw#◆ }"; fi
   if [ -s "$TMP/$safe.txt" ] && ! head -1 "$TMP/$safe.txt" | grep -q '^✗\|^(empty response)$'; then
     cat "$TMP/$safe.txt"
   elif [ -s "$TMP/$safe.txt" ]; then
@@ -111,4 +149,9 @@ if [ -n "${FAILED:-}" ]; then
   echo "◆ Panel INCOMPLETE — at least one juror failed. Do not read this as a pass." >&2
   exit 1
 fi
+if [ -n "${PARTIAL:-}" ]; then
+  echo "◆ Panel PARTIAL — the diff was truncated (${PARTIAL#◆ WARNING: }). Not a full review and not a pass: split the PR or raise MAX_DIFF_CHARS." >&2
+  exit 4
+fi
+_jok=1
 echo "◆ Panel done. Triage each finding against the code — a claim is a lead, not a verdict." >&2
