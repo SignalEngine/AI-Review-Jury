@@ -67,7 +67,9 @@ if [ "${JURY_ALWAYS:-0}" != 1 ] && [ "${JURY_FORCE:-0}" != 1 ]; then
   case " $* " in
     *" --commit "*) _jsha=$(printf '%s\n' "$@" | grep -A1 -x -- --commit | tail -1); _jd=$(git show "$_jsha" 2>/dev/null) ;;
     *" --uncommitted "*) _jd=$(git diff HEAD 2>/dev/null) ;;
-    *) _jb=$(git merge-base HEAD origin/master 2>/dev/null || git merge-base HEAD origin/main 2>/dev/null || true)
+    # same diff the jurors read (juror.sh --base): the gate judged origin/master instead (review 11-03)
+    *" --base "*) _jbb=$(printf '%s\n' "$@" | grep -A1 -x -- --base | tail -1); _jd=$(git diff "$_jbb"...HEAD 2>/dev/null || true) ;;
+    *) _jb=$(git merge-base HEAD origin/main 2>/dev/null || git merge-base HEAD origin/master 2>/dev/null || true)
        _jd=$([ -n "$_jb" ] && git diff "$_jb"...HEAD 2>/dev/null || true) ;;
   esac
   _jrisk='auth|clerk|stripe|billing|payment|checkout|webhook|secret|credential|permission|sudo|chmod|chown|setuid|ssh|firewall|iptables|ufw|nftables|install|provision|security|guardrail|password|apikey|api_key|requireOrgAccess|tenant|encrypt|signature|oauth|token'
