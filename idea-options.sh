@@ -24,6 +24,7 @@
 #
 # Env: OPENROUTER_API_KEY (req). MODELS_PROPOSERS (comma-sep) / MODELS_JUDGE /
 #      MODELS_SYNTH override the defaults. PANEL_TIMEOUT (default 240s).
+#      IDEA_LEDGER / IDEA_RUNS override the ledger file and run-folder (test seams).
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-$(/root/.local/bin/ork 2>/dev/null)}"
@@ -217,7 +218,7 @@ print(" ".join(t for t,_ in c.most_common(4)))' <<<"$CONTENT")
 echo "  terms: $TERMS"
 python3 /root/.claude/scripts/brain-search.py -n 4 $TERMS 2>/dev/null | sed 's/^/  /' || echo "  (no ledger hits)"
 
-PRIOR_DECISIONS="$(grep -A2 -E '^### (DECISION|OUTCOME)' "$HERE/idea-ledger.md" 2>/dev/null | tail -40 || true)"
+PRIOR_DECISIONS="$(grep -A2 -E '^### (DECISION|OUTCOME)' "${IDEA_LEDGER:-$HERE/idea-ledger.md}" 2>/dev/null | tail -40 || true)"
 [ -n "$PRIOR_DECISIONS" ] && { echo; echo "  prior decisions on record (feeding synthesis):"; echo "$PRIOR_DECISIONS" | sed 's/^/    /'; }
 
 # ── 1. BLIND PROPOSERS (parallel) ────────────────────────────────────────────
@@ -305,7 +306,7 @@ Then state in one line WHAT WOULD HAVE TO BE TRUE for the bottom-ranked option t
 # Keep the raw proposals. Without them a past decision cannot be re-examined — the
 # ledger stores only the judge's OUTPUT, so "was the judge stable?" was unanswerable
 # on three real runs. Cheap to keep, impossible to reconstruct later.
-RUNDIR="$HERE/idea-runs/$(date +%Y%m%d-%H%M%S)"
+RUNDIR="${IDEA_RUNS:-$HERE/idea-runs}/$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$RUNDIR"
 cp "$TMP"/opt* "$RUNDIR"/ 2>/dev/null || true
 printf '%s\n' "$CONTENT" > "$RUNDIR/problem.md"
@@ -338,7 +339,7 @@ if [ "${IDEA_JUDGE:-brain}" != model ]; then
   echo "its KILL line and date, set NOW. Log it in idea-decide as 'TEST: ...' (or"
   echo "'NO-TEST: <reason>' when no build follows). The brief's External check is its floor."
   { echo; echo "## OPTIONS — $(head -1 <<<"$CONTENT" | sed 's/^#* *//' | cut -c1-80)"
-    echo "_proposers: ${PROPOSERS[*]} · judge=brain · run=${RUNDIR}_"; echo "---"; } >> "$HERE/idea-ledger.md"
+    echo "_proposers: ${PROPOSERS[*]} · judge=brain · run=${RUNDIR}_"; echo "---"; } >> "${IDEA_LEDGER:-$HERE/idea-ledger.md}"
   echo; echo "◆ proposals in $RUNDIR — log your pick with: idea-decide \"$(basename "$RUNDIR")\" \"<choice + why>\"" >&2
   exit 0
 fi
@@ -373,7 +374,7 @@ $P_SYNTH") || { echo "✗ synthesis failed — NOT appending to the ledger" >&2;
 echo "$OUT"
 
 # ── 4. LEDGER ────────────────────────────────────────────────────────────────
-LEDGER="$HERE/idea-ledger.md"
+LEDGER="${IDEA_LEDGER:-$HERE/idea-ledger.md}"
 { echo; echo "## OPTIONS — $(head -1 <<<"$CONTENT" | sed 's/^#* *//' | cut -c1-80)"
   echo "_proposers: ${PROPOSERS[*]} · judge=$M_JUDGE · synth=${M_SYNTH}_"
   echo "$SCORES"; echo; echo "$OUT"; echo "---"; } >> "$LEDGER" || { echo "✗ ledger append FAILED — not reporting success" >&2; exit 1; }

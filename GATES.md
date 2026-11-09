@@ -15,4 +15,4 @@
 - [x] I4 (replay on real ledger copy)
   CHECK: cp /root/diff-jury/idea-ledger.md /tmp/l.md && IDEA_LEDGER=/tmp/l.md IDEA_TODAY=2026-11-09 /root/wt-idea-out-bin/idea-decide --overdue; echo "RC=$?"
   EXPECT: RC=0
-  RESULT: RC=0; with DUE: 2026-11-17 added to the 11-09 decision and TODAY=2026-11-18 → exactly 1 OVERDUE line, RC=1; TODAY=11-16 → RC=0.
+  RESULT (re-run after review fixes): RC=0; with DUE: 2026-11-17 added to the 11-09 decision and TODAY=2026-11-18 → exactly 1 OVERDUE line, RC=1; TODAY=11-16 → RC=0.

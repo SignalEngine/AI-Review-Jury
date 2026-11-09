@@ -22,6 +22,8 @@ while [ $# -gt 0 ]; do [ "$1" = "-o" ] && { echo "STUB-CODEX option text" > "$2"
 S
 chmod +x "$T/bin"/*
 echo "brief about a thing" > "$T/brief.md"
+: > "$T/ledger.md"; mkdir "$T/runs"; export IDEA_LEDGER="$T/ledger.md" IDEA_RUNS="$T/runs"
+REAL_BEFORE=$(md5sum "$HERE/idea-ledger.md" 2>/dev/null); RUNS_BEFORE=$(ls "$HERE/idea-runs" 2>/dev/null | md5sum)
 OUT=$(cd "$HERE" && PATH="$T/bin:$PATH" OPENROUTER_API_KEY=x IDEA_OVERDUE_OK=1 IDEA_NO_AMBITION=1 \
   IDEA_DECIDE_BIN=/bin/true bash ./idea-options.sh "$T/brief.md" 2>"$T/err"); rc=$?
 N=$(grep -c 'STUB-\(CLAUDE\|CODEX\) option text' <<<"$OUT")
@@ -29,5 +31,7 @@ F=$(grep -c 'seat failover' "$T/err")
 [ "$rc" = 0 ] || { echo "FAIL: exit $rc"; cat "$T/err"; exit 1; }
 [ "$N" = 5 ] || { echo "FAIL: $N stub bodies, want 5"; echo "$OUT" | head -40; exit 1; }
 [ "$F" = 5 ] || { echo "FAIL: $F failover lines, want 5"; cat "$T/err"; exit 1; }
-rm -rf "$HERE"/idea-runs/"$(ls -t "$HERE/idea-runs" | head -1)" 2>/dev/null
+[ "$(md5sum "$HERE/idea-ledger.md" 2>/dev/null)" = "$REAL_BEFORE" ] || { echo "FAIL: real idea-ledger.md changed"; exit 1; }
+[ "$(ls "$HERE/idea-runs" 2>/dev/null | md5sum)" = "$RUNS_BEFORE" ] || { echo "FAIL: real idea-runs changed"; exit 1; }
+grep -q '^## OPTIONS' "$T/ledger.md" && [ -n "$(ls "$T/runs")" ] || { echo "FAIL: temp ledger/runs not used"; exit 1; }
 echo "CLI SEAT TEST PASS"
