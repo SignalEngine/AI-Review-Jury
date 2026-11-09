@@ -32,6 +32,8 @@ export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-$(/root/.local/bin/ork 2>/dev/n
 SRC="${1:--}"; FOCUS="${2:-}"
 CONTENT="$([ "$SRC" = "-" ] && cat || cat "$SRC")"
 [ -n "$CONTENT" ] || { echo "✗ empty problem statement" >&2; exit 1; }
+# Outcomes first: a past bet with no result logged blocks a new idea run.
+${IDEA_DECIDE_BIN:-/root/.local/bin/idea-decide} --overdue >&2 || { [ "${IDEA_OVERDUE_OK:-0}" = 1 ] || { echo "✗ overdue idea outcomes above — log each with idea-decide --outcome before a new idea run (IDEA_OVERDUE_OK=1 = declared skip)" >&2; exit 2; }; }
 # 2026-11-09 (James): ideas were picked on model opinion with no real-world check
 # set first. The brief must open with the /be-ambitious ideas answers
 # (skills/be-ambitious/references/ideas.md); its "External check:" line is the
@@ -64,7 +66,7 @@ MAX=${MAX_CHARS:-40000}; CONTENT="${CONTENT:0:$MAX}"
 # Refreshed to the current fast tier: glm-5.3-flash and gemini-3.7-flash are newer
 # and cheaper than the 5.2/3.5 seats they replace, and every seat here is a
 # flash/turbo-class model because proposers need RANGE and SPEED, not depth.
-IFS=, read -r -a PROPOSERS <<< "${MODELS_PROPOSERS:-tencent/hy3-preview|xiaomi/mimo-v2.5-pro,z-ai/glm-5.3-flash|z-ai/glm-5.2,google/gemini-3.7-flash|google/gemini-3.5-flash-lite,openai/gpt-5.6-luna|openai/gpt-5.6-sol,deepseek/deepseek-v4-flash|deepseek/deepseek-v4-pro}"
+IFS=, read -r -a PROPOSERS <<< "${MODELS_PROPOSERS:-tencent/hy3-preview|xiaomi/mimo-v2.5-pro|cli:sonnet,z-ai/glm-5.3-flash|z-ai/glm-5.2|cli:haiku,google/gemini-3.7-flash|google/gemini-3.5-flash-lite|cli:codex,openai/gpt-5.6-luna|openai/gpt-5.6-sol|cli:codex:gpt-6-luna,deepseek/deepseek-v4-flash|deepseek/deepseek-v4-pro|cli:sonnet}"
 # m3 for judge + synthesis — neither was benchmarked, both take long inputs.
 # The judge must NOT be a proposer. It was minimax-m3, which is also proposer #3 —
 # so it scored its own proposal, the textbook self-preference case and the exact
@@ -96,14 +98,41 @@ try:
 except Exception: print("(bad shape:",raw[:200],")"); sys.exit(1)'
 }
 
+# call_cli "cli:sonnet|cli:haiku|cli:codex[:model]" prompt -> text. Subscription CLI
+# seat: the LAST alternative of a seat, so OpenRouter at 402 still yields a run.
+call_cli() {
+  local spec="$1" prompt="$2" kind model f
+  IFS=: read -r _ kind model <<< "$spec"
+  case "$kind" in
+    sonnet|haiku)
+      env -u ANTHROPIC_BASE_URL -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_MODEL -u ANTHROPIC_SMALL_FAST_MODEL \
+        timeout "${PANEL_TIMEOUT:-240}" claude -p "$prompt
+
+--- PROBLEM ---
+$CONTENT" --model "$kind" \
+        --disallowedTools "Bash,Edit,Write,MultiEdit,NotebookEdit,Task,WebFetch,WebSearch" --max-turns 1 2>/dev/null ;;
+    codex)
+      f="$TMP/cli.$$.$RANDOM"
+      printf '%s' "$prompt
+
+--- PROBLEM ---
+$CONTENT" | timeout "${PANEL_TIMEOUT:-240}" codex exec --skip-git-repo-check -s read-only ${model:+-m "$model"} -o "$f" - >/dev/null 2>&1
+      [ -s "$f" ] && cat "$f" ;;
+    *) echo "(unknown cli seat: $spec)"; return 1 ;;
+  esac
+}
+
 # call_seat "primary|fallback|..." prompt -> text, trying each until one answers.
 # Prints "◇ seat failover" to stderr so a silent downgrade is never invisible.
 call_seat() {
   local spec="$1" prompt="$2" m rc=1 out
   local IFS='|'; read -r -a alts <<< "$spec"; unset IFS
   for m in "${alts[@]}"; do
-    if [ "${IDEA_REPO:-0}" = 1 ]; then out=$(call_repo "$m" "$prompt"); rc=$?
-    else out=$(call "$m" "$prompt"); rc=$?; fi
+    case "$m" in
+      cli:*) out=$(call_cli "$m" "$prompt"); rc=$? ;;
+      *) if [ "${IDEA_REPO:-0}" = 1 ]; then out=$(call_repo "$m" "$prompt"); rc=$?
+         else out=$(call "$m" "$prompt"); rc=$?; fi ;;
+    esac
     if [ $rc -eq 0 ] && [ -n "$out" ]; then
       printf '%s' "$out"; [ "$m" = "${alts[0]}" ] || echo "◇ seat failover: ${alts[0]} → $m" >&2
       return 0
@@ -169,6 +198,7 @@ except Exception: pass')
 if [ -n "$_KNOWN" ]; then
   for spec in "${PROPOSERS[@]}" "$M_JUDGE" "$M_SYNTH"; do
     ( IFS='|'; for m in $spec; do
+        case "$m" in cli:*) continue ;; esac
         grep -qxF "$m" <<< "$_KNOWN" || { echo "✗ unknown OpenRouter model slug: $m (check https://openrouter.ai/models)" >&2; exit 2; }
       done ) || exit 2
   done
@@ -187,7 +217,7 @@ print(" ".join(t for t,_ in c.most_common(4)))' <<<"$CONTENT")
 echo "  terms: $TERMS"
 python3 /root/.claude/scripts/brain-search.py -n 4 $TERMS 2>/dev/null | sed 's/^/  /' || echo "  (no ledger hits)"
 
-PRIOR_DECISIONS="$(grep -A2 '^### DECISION' "$HERE/idea-ledger.md" 2>/dev/null | tail -40 || true)"
+PRIOR_DECISIONS="$(grep -A2 -E '^### (DECISION|OUTCOME)' "$HERE/idea-ledger.md" 2>/dev/null | tail -40 || true)"
 [ -n "$PRIOR_DECISIONS" ] && { echo; echo "  prior decisions on record (feeding synthesis):"; echo "$PRIOR_DECISIONS" | sed 's/^/    /'; }
 
 # ── 1. BLIND PROPOSERS (parallel) ────────────────────────────────────────────
@@ -330,7 +360,7 @@ Produce, terse:
 5. TEST BEFORE BUILD — the winner's riskiest assumption and an XYZ test of it ('at least X% of <who> will <costly action> within <days>; KILL if below'). Agreement from models is not a test.
 Do not restate the options. Decide.${PRIOR_DECISIONS:+
 
-The user has made these PRIOR DECISIONS (their taste signal) — weight toward what they have valued, and FLAG if a recommendation contradicts one:
+The user has made these PRIOR DECISIONS (their taste signal) — weight toward what they have valued, and FLAG if a recommendation contradicts one. OUTCOME lines are what actually happened; weight them above the pick itself:
 $PRIOR_DECISIONS}"
 
 echo; echo "═══ 3 · SYNTHESIS ($M_SYNTH) ═══"

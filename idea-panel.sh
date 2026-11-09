@@ -23,6 +23,8 @@ export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-$(/root/.local/bin/ork 2>/dev/n
 SRC="${1:--}"; FOCUS="${2:-}"
 CONTENT="$([ "$SRC" = "-" ] && cat || cat "$SRC")"
 [ -n "$CONTENT" ] || { echo "✗ empty idea" >&2; exit 1; }
+# Outcomes first: a past bet with no result logged blocks a new idea run.
+${IDEA_DECIDE_BIN:-/root/.local/bin/idea-decide} --overdue >&2 || { [ "${IDEA_OVERDUE_OK:-0}" = 1 ] || { echo "✗ overdue idea outcomes above — log each with idea-decide --outcome before a new idea run (IDEA_OVERDUE_OK=1 = declared skip)" >&2; exit 2; }; }
 MAX=${MAX_CHARS:-40000}; CONTENT="${CONTENT:0:$MAX}"
 
 # Role→model. Candidates (deepseek-v4-flash, gemini-3.5-flash-lite) sit in the
@@ -81,7 +83,7 @@ echo "  terms: $TERMS"
 python3 /root/.claude/scripts/brain-search.py -n 4 $TERMS 2>/dev/null | sed 's/^/  /' || echo "  (no ledger hits)"
 
 # Prior DECISIONS (your logged picks + why) — the taste signal fed into synthesis.
-PRIOR_DECISIONS="$(grep -A2 '^### DECISION' "$HERE/idea-ledger.md" 2>/dev/null | tail -40 || true)"
+PRIOR_DECISIONS="$(grep -A2 -E '^### (DECISION|OUTCOME)' "$HERE/idea-ledger.md" 2>/dev/null | tail -40 || true)"
 [ -n "$PRIOR_DECISIONS" ] && { echo; echo "  prior decisions on record (feeding synthesis):"; echo "$PRIOR_DECISIONS" | sed 's/^/    /'; }
 
 # ── 1. THREE ROLE-DIVERSE PERSPECTIVES (parallel) ────────────────────────────
@@ -114,7 +116,7 @@ P_SYNTH="Below are three perspectives (advocate/skeptic/researcher) on the same 
 3. TOP UNKNOWNS TO RESEARCH — ranked by how much resolving them would change the decision; name the concrete check for each.
 Be terse and concrete. Do not re-argue the idea; map the structure of the disagreement.${PRIOR_DECISIONS:+
 
-The user has made these PRIOR DECISIONS on related ideas (their taste signal) — weight the map toward what they have valued, and FLAG if this idea repeats or contradicts a past decision:
+The user has made these PRIOR DECISIONS on related ideas (their taste signal) — weight the map toward what they have valued, and FLAG if this idea repeats or contradicts a past decision. OUTCOME lines are what actually happened; weight them above the pick itself:
 $PRIOR_DECISIONS}"
 echo; echo "═══ 2 · DIVERGENCE MAP ($M_SYNTH) ═══"
 MAP=$(call "$M_SYNTH" "$BUNDLE
