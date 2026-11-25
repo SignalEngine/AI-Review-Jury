@@ -15,13 +15,13 @@ done; the build is whatever makes it pass. This inverts the usual failure mode
    runnable script to `/tmp/claude-gates/<task-slug>/gate.py` (or `.mjs`/`.sh` —
    match the repo's tooling) that exits 0 IF AND ONLY IF the user's request is
    genuinely, verifiably complete. Never write it inside the repo.
-1b. **Cross-model gate critique (non-trivial features).** Before running the
-   baseline, have a diverse-lineage panel attack the GATE ITSELF:
+1b. **Cross-model gate critique (only when James asks: panel.sh bills OpenRouter,
+   global CLAUDE.md §3).** Before running the baseline, a diverse-lineage panel
+   attacks the GATE ITSELF:
    `bash /root/diff-jury/panel.sh --preset plan <gate-file> "You are reviewing an acceptance gate, not a plan. The request it must enforce: <request>. Find: requirements with NO check, checks a lazy builder could pass WITHOUT doing the work, and checks that test something never asked for."`
    Triage findings like jury findings (confirm/refute), tighten the gate, then
-   proceed. This is where other lineages earn their keep — critiquing the checks
-   is text critique (panel's home turf); WRITING the gate needs repo context
-   they don't have. Skip for small tasks.
+   proceed. Without the ask, a fresh-context subagent given only the request
+   and the gate file does the same attack at no OpenRouter cost.
 2. **Baseline must fail RED.** Run the gate before building. A passing baseline
    means the gate is weak or the work already exists — say so loudly and stop to
    re-derive the gate; never proceed on a green baseline.
